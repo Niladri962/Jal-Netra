@@ -1,0 +1,22 @@
+[project]
+name = "jalnetra"
+version = "1.0.0"
+description = "JalNetra - IoT virtual water grid simulator for Telangana's rural drinking-water network"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["matplotlib>=3.7", "pytest>=8"]
+
+[tool.uv]
+package = false          # an application, not an installable library
+
+[tool.vercel]
+entrypoint = "api.index:handler"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

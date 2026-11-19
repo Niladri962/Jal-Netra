@@ -24,10 +24,12 @@ The repo deploys to Vercel with no configuration changes:
 
 * **`public/`** holds the pre-built interface: `index.html` (10-node scenario) and `pilot.html`
   (school pilot). Rebuild it with `python build_site.py` after changing the simulator.
-* **`api/`** holds the Python serverless functions that power the Scenario Lab:
-  `POST /api/run`, `GET /api/config`, `GET /api/ping`. They need only NumPy and pandas;
-  the Isolation Forest is implemented in NumPy (`jalnetra/iforest.py`).
-* **`vercel.json`** serves `public/` and allows up to 60 s per simulation.
+* **`api/index.py`** is the single Python entrypoint, declared in `pyproject.toml` as
+  `[tool.vercel] entrypoint = "api.index:handler"`. It powers the Scenario Lab with three routes:
+  `POST /api/run`, `GET /api/config` and `GET /api/ping`. It also serves the pages if the CDN
+  doesn't.
+* **Dependencies:** only NumPy and pandas are needed, because the Isolation Forest is implemented
+  in NumPy (`jalnetra/iforest.py`).
 
 To deploy, push the repo to GitHub, then in Vercel choose **Add New → Project → Import** the
 repository and press **Deploy**. Every later `git push` redeploys automatically.
