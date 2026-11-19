@@ -11,9 +11,9 @@
 /* ===================== theme tokens: "monsoon water" ===================== */
 :root{
   color-scheme:light;
-  --page:#eef3f6; --surface:#ffffff; --surface-2:#f3f7fa; --surface-3:#e7eef3; --border:#d9e3ea;
-  --text:#0e1c2a; --text-2:#46596a; --muted:#7a8c9c;
-  --brand-a:#0b3954; --brand-b:#0e7c86; --accent:#0e7c86; --accent-ink:#ffffff; --accent-soft:#d7eef0;
+  --page:#edf3f8; --surface:#ffffff; --surface-2:#f4f8fb; --surface-3:#e5edf3; --border:#d8e2ea;
+  --text:#0b1b2b; --text-2:#435669; --muted:#76899a; --glow:rgba(14,124,134,.13); --glow-2:rgba(42,120,214,.10);
+  --brand-a:#0b2545; --brand-m:#13406b; --brand-b:#0e7c86; --accent:#087f91; --accent-ink:#ffffff; --accent-soft:#d6eff2;
   --series-1:#2a78d6; --series-2:#eb6834;
   --good:#0ca30c; --warning:#fab219; --critical:#d03b3b; --offline:#8a97a3;
   --good-a:rgba(12,163,12,.07); --warn-a:rgba(250,178,25,.11); --crit-a:rgba(208,59,59,.08);
@@ -23,9 +23,9 @@
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
-    --page:#08131d; --surface:#0f1e2b; --surface-2:#132536; --surface-3:#1a3043; --border:#1f3548;
-    --text:#e8f1f7; --text-2:#a9bccb; --muted:#7590a6;
-    --brand-a:#0a2a3f; --brand-b:#0b5d66; --accent:#3cc4cf; --accent-ink:#06222a; --accent-soft:#123a44;
+    --page:#07111c; --surface:#0f1e2b; --surface-2:#132536; --surface-3:#1a3043; --border:#1f3548;
+    --text:#e8f1f7; --text-2:#a9bccb; --muted:#7590a6; --glow:rgba(47,208,216,.10); --glow-2:rgba(57,135,229,.08);
+    --brand-a:#061a2e; --brand-m:#0c2f4f; --brand-b:#0b5d66; --accent:#2fd0d8; --accent-ink:#04212a; --accent-soft:#103944;
     --series-1:#3987e5; --series-2:#d95926;
     --good-a:rgba(12,163,12,.10); --warn-a:rgba(250,178,25,.10); --crit-a:rgba(208,59,59,.13);
     --band:rgba(230,103,103,.16); --grid:rgba(232,241,247,.07); --pipe:#3987e5; --pipe-ok:#2c4a63;
@@ -34,26 +34,66 @@
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --page:#08131d; --surface:#0f1e2b; --surface-2:#132536; --surface-3:#1a3043; --border:#1f3548;
-  --text:#e8f1f7; --text-2:#a9bccb; --muted:#7590a6;
-  --brand-a:#0a2a3f; --brand-b:#0b5d66; --accent:#3cc4cf; --accent-ink:#06222a; --accent-soft:#123a44;
+  --page:#07111c; --surface:#0f1e2b; --surface-2:#132536; --surface-3:#1a3043; --border:#1f3548;
+  --text:#e8f1f7; --text-2:#a9bccb; --muted:#7590a6; --glow:rgba(47,208,216,.10); --glow-2:rgba(57,135,229,.08);
+  --brand-a:#061a2e; --brand-m:#0c2f4f; --brand-b:#0b5d66; --accent:#2fd0d8; --accent-ink:#04212a; --accent-soft:#103944;
   --series-1:#3987e5; --series-2:#d95926;
   --good-a:rgba(12,163,12,.10); --warn-a:rgba(250,178,25,.10); --crit-a:rgba(208,59,59,.13);
   --band:rgba(230,103,103,.16); --grid:rgba(232,241,247,.07); --pipe:#3987e5; --pipe-ok:#2c4a63;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25);
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--page);color:var(--text);
+html,body{margin:0;color:var(--text);
   font:14px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,"Noto Sans Telugu","Nirmala UI",sans-serif}
+html{background:var(--page)}
+body{background:radial-gradient(1100px 520px at 88% 0,var(--glow),transparent 62%),
+  radial-gradient(900px 480px at 0 30%,var(--glow-2),transparent 60%),var(--page);background-attachment:fixed;min-height:100vh}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 button,select,input{font:inherit;color:inherit}
 .wrap{max-width:1560px;margin:0 auto;padding:0 16px 32px}
 
 /* ---------- brand band ---------- */
-.brand{background:linear-gradient(115deg,var(--brand-a) 0%,var(--brand-b) 100%);color:#fff;position:relative;overflow:hidden}
-.brand:after{content:"";position:absolute;inset:auto -10% -60px -10%;height:90px;opacity:.12;
-  background:radial-gradient(60% 90px at 50% 0,#fff,transparent)}
-.brand .in{max-width:1560px;margin:0 auto;padding:16px;display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;position:relative;z-index:1}
-.logo{display:flex;align-items:center;gap:12px;flex:1 1 420px;min-width:0}
+.brand{background:linear-gradient(118deg,var(--brand-a) 0%,var(--brand-m) 48%,var(--brand-b) 100%);color:#fff;position:relative;overflow:hidden}
+.brand .in{max-width:1560px;margin:0 auto;padding:16px 16px 30px;display:flex;flex-wrap:wrap;align-items:center;gap:12px 14px;position:relative;z-index:1}
+.wave{position:absolute;left:0;bottom:-1px;width:200%;height:34px;z-index:0;animation:wave 16s linear infinite;opacity:.9}
+.wave.w2{animation-duration:24s;opacity:.45;bottom:4px}
+@keyframes wave{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.wave{animation:none}}
+.scen{display:inline-flex;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:10px;padding:2px}
+.scen a{color:#fff;text-decoration:none;padding:5px 11px;border-radius:8px;font-size:13px;opacity:.78}
+.scen a.on{background:#fff;color:var(--brand-a);opacity:1;font-weight:650}
+.ki{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--accent-soft);color:var(--accent);
+  font-size:14px;margin-right:6px;vertical-align:middle;flex:none}
+.kpi .l{display:flex;align-items:center}
+/* water flowing through pipes */
+.flow{animation:flow 1.6s linear infinite}
+.flow.slow{animation-duration:3.2s}.flow.fast{animation-duration:.9s}
+@keyframes flow{to{stroke-dashoffset:-28}}
+@media (prefers-reduced-motion:reduce){.flow{animation:none}}
+/* guided tour */
+.tour{position:fixed;left:16px;bottom:16px;z-index:1400;width:min(430px,calc(100vw - 32px));background:var(--surface);
+  border:1px solid var(--border);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.28);overflow:hidden;display:none}
+.tour.on{display:block;animation:rise .25s ease-out}
+@keyframes rise{from{transform:translateY(20px);opacity:0}}
+.tour .th{background:linear-gradient(118deg,var(--brand-a),var(--brand-b));color:#fff;padding:10px 14px;display:flex;align-items:center;gap:8px}
+.tour .th b{flex:1;font-size:13.5px}
+.tour .tb{padding:12px 14px;font-size:13px;color:var(--text-2)}
+.tour .tb h4{margin:0 0 6px;color:var(--text);font-size:15px}
+.tour .tb .ai{margin-top:8px;padding:8px 10px;border-radius:10px;background:var(--accent-soft);color:var(--text);font-size:12.5px}
+.tour .tf{display:flex;gap:8px;align-items:center;padding:10px 14px;border-top:1px solid var(--border)}
+.tour .tf .sp{flex:1}
+.tour .dots{display:flex;gap:4px}.tour .dots i{width:6px;height:6px;border-radius:50%;background:var(--surface-3)}
+.tour .dots i.on{background:var(--accent)}
+/* architecture diagram */
+.arch{width:100%;height:auto;display:block}
+.arch .pkt{animation:pkt 3.2s linear infinite}
+@keyframes pkt{from{offset-distance:0%}to{offset-distance:100%}}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:12px}
+.how .card h3{margin:0 0 6px;font-size:14px;display:flex;align-items:center;gap:6px}
+.how .card p{margin:0;font-size:12.5px;color:var(--text-2)}
+.how .card .m{margin-top:8px;font-size:12px;color:var(--muted)}
+.logo{display:flex;align-items:center;gap:12px;flex:1 1 380px;min-width:0}
+.logo .sub{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .logo h1{margin:0;font-size:21px;letter-spacing:-.01em}
 .logo h1 span{font-weight:400;opacity:.8}
 .logo .sub{font-size:12.5px;opacity:.82;max-width:760px}
@@ -238,11 +278,16 @@ code,.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
       <circle cx="20" cy="25" r="6.2" fill="none" stroke="#0e7c86" stroke-width="2.4"/><circle cx="20" cy="25" r="2.4" fill="#0b3954"/></svg>
     <div><h1>JalNetra <span>· Virtual Water Grid</span></h1><div class="sub" id="subtitle"></div></div>
   </div>
-  <select id="jump" class="bbtn" aria-label="Jump to injected event" style="max-width:260px"></select>
+  <nav class="scen" id="scen" aria-label="Scenario"></nav>
   <div class="seg" role="group" aria-label="Alert language"><button data-l="en">EN</button><button data-l="te">తెలుగు</button><button data-l="both" class="on">Both</button></div>
-  <button class="bbtn" id="theme" title="Toggle light / dark">◐ Theme</button>
+  <button class="bbtn" id="theme" title="Toggle light / dark (T)">◐</button>
+  <button class="bbtn" id="share" title="Copy a link to exactly this view">🔗 Share</button>
+  <button class="bbtn" id="tourbtn" title="Guided walkthrough of every detected event (G)">🎬 Guided tour</button>
   <button class="bbtn solid" id="labbtn" title="Inject your own events and re-run (L)">⚗ Scenario Lab</button>
-</div></div>
+</div>
+<svg class="wave w2" viewBox="0 0 1440 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0 18 Q 90 4 180 18 T 360 18 T 540 18 T 720 18 T 900 18 T 1080 18 T 1260 18 T 1440 18 V34 H0Z" fill="var(--page)" opacity=".5"/></svg>
+<svg class="wave" viewBox="0 0 1440 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0 22 Q 120 8 240 22 T 480 22 T 720 22 T 960 22 T 1200 22 T 1440 22 V34 H0Z" fill="var(--page)"/></svg>
+</div>
 
 <div class="wrap">
   <div class="ctrl"><div class="card">
@@ -252,7 +297,8 @@ code,.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
     <select class="btn" id="speed" aria-label="Playback speed"><option value="160">1×</option><option value="70" selected>2×</option><option value="25">5×</option><option value="8">10×</option></select>
     <div class="track"><div class="rail" id="rail"></div><input type="range" id="slider" min="0" value="0" aria-label="Simulation time"></div>
     <div class="clock" id="clock"></div>
-    <span class="kbd">Space play · ←/→ hour · Shift day · L lab</span>
+    <select id="jump" class="btn" aria-label="Jump to injected event" style="max-width:220px"></select>
+    <span class="kbd">Space play · ←/→ hour · Shift day · G tour · L lab · T theme</span>
   </div></div>
 
   <div class="kpis" id="kpis"></div>
@@ -264,7 +310,7 @@ code,.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
       <div class="legend" id="maplegend"></div>
     </div>
     <div class="card">
-      <h2>Alert feed <small id="feedcount"></small></h2>
+      <h2>Alert feed <small id="feedcount"></small><button class="btn" id="csvalerts" style="margin-left:auto;padding:3px 9px;font-size:12px" title="Download all alerts">⬇ CSV</button></h2>
       <div class="chips" id="chips"></div>
       <div class="chips"><input class="search" id="search" placeholder="Search alerts, places, types…" aria-label="Search alerts">
         <label class="chip"><input type="checkbox" id="showres" checked style="margin:0"> resolved</label></div>
@@ -281,7 +327,8 @@ code,.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
   <div class="card">
     <div class="dhead">
       <h2 id="dtitle"></h2><span id="dpill"></span><span class="note" id="dsub" style="margin:0"></span>
-      <div class="dsel"><select id="nodesel" aria-label="Select node"></select><select id="cmpsel" aria-label="Compare with node"></select></div>
+      <div class="dsel"><select id="nodesel" aria-label="Select node"></select><select id="cmpsel" aria-label="Compare with node"></select>
+        <button class="btn" id="csvnode" title="Download this node's hourly data">⬇ CSV</button></div>
     </div>
     <div class="vals" id="vals"></div>
     <div class="charts" id="nodecharts"></div>
@@ -298,6 +345,14 @@ code,.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
   <section class="pane" id="p-eval"></section>
   <section class="pane" id="p-net"></section>
   <section class="pane" id="p-msg"></section>
+  <section class="pane" id="p-how"></section>
+</div>
+<div class="tour" id="tour" role="dialog" aria-label="Guided tour">
+  <div class="th"><b id="tourhd">Guided tour</b><span id="tourn" style="font-size:12px;opacity:.85"></span><button class="x" id="tourx" style="color:#fff" title="Close (Esc)">✕</button></div>
+  <div class="tb" id="tourbody"></div>
+  <div class="tf"><div class="dots" id="tourdots"></div><span class="sp"></span>
+    <label class="note" style="margin:0;display:flex;gap:4px;align-items:center"><input type="checkbox" id="tourauto"> auto</label>
+    <button class="btn" id="tourprev">‹ Back</button><button class="btn primary" id="tournext" style="min-width:0">Next ›</button></div>
 </div>
 
 <aside class="drawer" id="drawer" aria-label="Scenario Lab">
@@ -314,7 +369,7 @@ let D = /*__JALNETRA_DATA__*/null;
 const SERVED = location.protocol.startsWith("http");
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 let H, T0, nodeById, groupById, cur = 0, sel = null, cmp = "", timer = null, hoverIdx = null, C = {};
-let sevFilter = "all", search = "", lang = "both", showRes = true;
+let sevFilter = "all", search = "", lang = "both", showRes = true, curTab = "balance", hashReady = false;
 const acked = new Set();
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -455,9 +510,12 @@ function drawNetwork() {
     const p = nodeById[n.parent], trunk = p.kind === "source";
     const casing = L.polyline([[p.lat, p.lon], [n.lat, n.lon]], {weight: trunk ? 11 : 8, color: C.surface, opacity: .9, interactive: false}).addTo(netLayer);
     const line = L.polyline([[p.lat, p.lon], [n.lat, n.lon]], {weight: trunk ? 6 : 4, opacity: 1, lineCap: "round"}).addTo(netLayer);
+    const flow = L.polyline([[p.lat, p.lon], [n.lat, n.lon]], {weight: trunk ? 2.2 : 1.6, color: "#ffffff", opacity: .85,
+      dashArray: "3 11", lineCap: "round", interactive: false, className: "flow"}).addTo(netLayer);
     line.bindTooltip("", {sticky: true});
     line.on("click", () => selectGroup("G-" + n.parent));
-    pipes.push({line, casing, group: "G-" + n.parent});
+    const fmax = Math.max(1, ...D.series[n.id].flow.filter(v => v != null));
+    pipes.push({line, casing, flow, group: "G-" + n.parent, child: n.id, fmax});
   });
   const gwIcon = L.divIcon({className: "", iconSize: [28, 28], iconAnchor: [14, 14],
     html: `<div class="mk"><svg width="28" height="28" viewBox="0 0 28 28"><rect x="3" y="3" width="22" height="22" rx="6" fill="${C.text}" stroke="${C.surface}" stroke-width="2"/><path d="M9.5 15.5a6 6 0 0 1 9 0M7 12a9.5 9.5 0 0 1 14 0" stroke="${C.surface}" fill="none" stroke-width="1.7" stroke-linecap="round"/><circle cx="14" cy="18.5" r="1.6" fill="${C.surface}"/></svg></div>`});
@@ -485,6 +543,9 @@ function updateMap() {
     const g = groupById[p.group], s = g ? g.state[cur] : -1;
     const color = s === 3 ? C.critical : s >= 1 ? C.warning : C.pipe;
     p.line.setStyle({color, dashArray: (s === 1 || s === 2) ? "9 7" : null});
+    const fv = D.series[p.child].flow[cur], r = fv == null ? 0 : fv / p.fmax, el = p.flow.getElement && p.flow.getElement();
+    p.flow.setStyle({opacity: r < 0.03 ? 0 : .85});
+    if (el) { el.classList.toggle("slow", r < .35); el.classList.toggle("fast", r > .7); }
     const lbl = ["balanced", "water loss", "suspected theft", "leak confirmed"][Math.max(0, s)] || "no data";
     p.line.setTooltipContent(`<b>${esc(g.name)}</b><br>Loss ratio ${fmt(g.ratio[cur], 1)}% (baseline ${g.mu}%)<br>State: <b>${lbl}</b><br><span style="opacity:.7">click for water balance</span>`);
   });
@@ -512,12 +573,12 @@ function updateKpis() {
   const averted = he.reduce((s, e) => s + (e.cases_averted || 0), 0), N = D.nodes.length;
   const bar = Object.entries(counts).filter(([, v]) => v).map(([k, v]) => `<i style="width:${v / N * 100}%;background:${C[STATUS[k].c]}"></i>`).join("");
   const tiles = [
-    ["status", "Network now", `${counts.green}<small style="font-size:13px;color:var(--muted)">/${N} safe</small>`, `<div class="bar">${bar}</div>${counts.amber} watch · ${counts.red} unsafe · ${counts.offline} offline`],
-    ["alerts", "Open alerts", openA.length, `${openA.filter(a => a.severity === "critical").length} critical · ${acked.size} acknowledged`],
-    ["eval", "Events detected", `${ev.events_detected}/${ev.events_total}`, `alert precision ${(ev.precision * 100).toFixed(0)}%`],
-    ["eval", "Median latency", ev.median_latency_min != null ? `${ev.median_latency_min}<small style="font-size:13px"> min</small>` : "–", "event start → first alert"],
-    ["balance", "Water lost", `${D.groups.reduce((s, g) => s + g.lost_kl, 0).toFixed(0)}<small style="font-size:13px"> kL</small>`, "during detected incidents"],
-    ["health", "Cases averted", he.length ? averted.toFixed(0) : "–", he.length ? "illustrative, vs status quo" : "no health model here"],
+    ["status", `<span class="ki">◉</span>Network now`, `${counts.green}<small style="font-size:13px;color:var(--muted)">/${N} safe</small>`, `<div class="bar">${bar}</div>${counts.amber} watch · ${counts.red} unsafe · ${counts.offline} offline`],
+    ["alerts", `<span class="ki">🔔</span>Open alerts`, openA.length, `${openA.filter(a => a.severity === "critical").length} critical · ${acked.size} acknowledged`],
+    ["eval", `<span class="ki">✓</span>Events detected`, `${ev.events_detected}/${ev.events_total}`, `alert precision ${ev.precision == null ? "–" : (ev.precision * 100).toFixed(0) + "%"}`],
+    ["eval", `<span class="ki">⏱</span>Median latency`, ev.median_latency_min != null ? `${ev.median_latency_min}<small style="font-size:13px"> min</small>` : "–", "event start → first alert"],
+    ["balance", `<span class="ki">💧</span>Water lost`, `${D.groups.reduce((s, g) => s + g.lost_kl, 0).toFixed(0)}<small style="font-size:13px"> kL</small>`, "during detected incidents"],
+    ["health", `<span class="ki">✚</span>Cases averted`, he.length ? averted.toFixed(0) : "–", he.length ? "illustrative, vs status quo" : "no health model here"],
   ];
   $("kpis").innerHTML = tiles.map(([k, l, v, s]) => `<button class="kpi" data-k="${k}"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></button>`).join("");
   $("kpis").querySelectorAll(".kpi").forEach(b => b.onclick = () => {
@@ -692,7 +753,7 @@ function selectNode(id, pan) {
     ch.options.plugins.legend.display = ds.length > 1;
     ch.update("none");
   });
-  updateDetailHead(); updateMap(); drawMatrix();
+  updateDetailHead(); updateMap(); drawMatrix(); saveHash();
   if (pan && map) map.panTo([n.lat, n.lon]);
 }
 function chip(label, v, unit, d, lvl, gauge) {
@@ -721,8 +782,9 @@ $("cmpsel").onchange = e => { cmp = e.target.value; selectNode(sel); };
 
 /* ================================ TABS ================================ */
 const TABS = [["balance", "💧 Water balance & theft"], ["equity", "⚖ Equity"], ["health", "✚ Public health"],
-              ["eval", "✓ AI evaluation"], ["net", "📡 Network & hardware"], ["msg", "✉ Messages"]];
+              ["eval", "✓ AI evaluation"], ["net", "📡 Network & hardware"], ["msg", "✉ Messages"], ["how", "🛈 How it works"]];
 function showTab(k) {
+  curTab = k; saveHash();
   document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.k === k));
   document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === "p-" + k));
   tabCharts.forEach(c => c.resize());
@@ -865,8 +927,14 @@ function buildTabs() {
 
 /* ================================ TIME ================================ */
 function setTime(h) {
+  const prev = cur;
   cur = clamp(h | 0, 0, H.length - 1);
   $("slider").value = cur;
+  if (timer && cur === prev + 1) {     // live-operator feel: pop critical alerts as they happen
+    D.alerts.filter(a => a.severity === "critical" && a.h > prev + 1 && a.h <= cur + 1)
+      .forEach(a => toast(`🚨 ${a.title} — ${a.location_name} (${a.time.slice(11)})`));
+  }
+  saveHash();
   const d = hourDate(cur), train = cur < D.meta.train_days * 24;
   $("clock").innerHTML = `${DOW[d.getDay()]} ${fmtTime(cur)}<small>${train ? "AI commissioning · learning baseline" : `day ${Math.floor(cur / 24) + 1} of ${D.meta.days}`}</small>`;
   updateMap(); updateKpis(); updateFeed(); updateDetailHead(); drawMatrix();
@@ -907,14 +975,16 @@ document.addEventListener("keydown", e => {
   else if (e.key === "ArrowRight") { e.preventDefault(); setTime(cur + (e.shiftKey ? 24 : 1)); }
   else if (e.key === "ArrowLeft") { e.preventDefault(); setTime(cur - (e.shiftKey ? 24 : 1)); }
   else if (e.key.toLowerCase() === "l") openLab();
-  else if (e.key === "Escape") closeLab();
+  else if (e.key.toLowerCase() === "g") startTour();
+  else if (e.key.toLowerCase() === "t") $("theme").click();
+  else if (e.key === "Escape") { closeLab(); endTour(); }
 });
 
 /* ================================ RENDER ================================ */
 function renderAll(keepTime) {
   readTheme();
   if (map) { tiles.setUrl(tileUrl()); }
-  drawNetwork(); buildNodeCharts(); buildTabs(); drawRail(); fillJump(); drawMatrixBase();
+  drawNetwork(); buildNodeCharts(); buildTabs(); buildHow(); buildScen(); drawRail(); fillJump(); drawMatrixBase();
   if (!keepTime) {
     const fc = D.alerts.find(a => a.severity === "critical");
     cur = fc ? clamp(Math.ceil(fc.h) + 1, 0, H.length - 1) : 0;
@@ -1026,12 +1096,156 @@ $("runbtn").onclick = async () => {
 let toastT;
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 5000); }
 
+/* ================================ DEEP LINKS / SHARE / EXPORT ================================ */
+function saveHash() {
+  if (!hashReady) return;
+  const p = new URLSearchParams({t: cur, n: sel || "", tab: curTab});
+  if (cmp) p.set("c", cmp);
+  history.replaceState(null, "", "#" + p.toString());
+}
+$("share").onclick = async () => {
+  saveHash();
+  try { await navigator.clipboard.writeText(location.href); toast("🔗 Link copied — it opens this exact time, node and tab."); }
+  catch { prompt("Copy this link:", location.href); }
+};
+function download(name, rows) {
+  const q = v => v == null ? "" : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
+  const blob = new Blob(["﻿" + rows.map(r => r.map(q).join(",")).join("\n")], {type: "text/csv;charset=utf-8"});
+  const a = Object.assign(document.createElement("a"), {href: URL.createObjectURL(blob), download: name});
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+$("csvnode").onclick = () => {
+  const s = D.series[sel];
+  download(`jalnetra_${D.meta.key}_${sel}.csv`, [["time", "status", "free_chlorine_mg_l", "chlorine_ground_truth", "turbidity_ntu", "tds_mg_l", "ph", "flow_l_min", "risk_index", "battery_mv"],
+    ...H.map((t, i) => [t, s.status[i], s.cl[i], s.cl_true[i], s.turb[i], s.tds[i], s.ph[i], s.flow[i], s.mri[i], s.batt[i]])]);
+};
+$("csvalerts").onclick = () => download(`jalnetra_${D.meta.key}_alerts.csv`,
+  [["id", "time", "severity", "type", "location", "village", "title", "message", "message_te", "status", "resolved_time"],
+   ...D.alerts.map(a => [a.id, a.time, a.severity, a.type, a.location_name, a.village, a.title, a.message, a.message_te, a.status, a.resolved_time])]);
+function buildScen() {
+  const file = location.protocol === "file:";
+  const href = k => file ? `../${k}/dashboard.html` : (k === "mandal" ? "./" : "./pilot.html");
+  $("scen").innerHTML = [["mandal", "Village network"], ["pilot", "School pilot"]]
+    .map(([k, l]) => `<a href="${href(k)}" class="${D.meta.key === k ? "on" : ""}">${l}</a>`).join("");
+}
+
+/* ================================ GUIDED TOUR ================================ */
+const AI_EXPLAIN = {
+  leak: "Water-balance CUSUM saw (inflow − outflows) jump above its learned baseline. The gap persisted through 00:00–05:00, when nobody draws water (minimum night flow) ⇒ physical leak.",
+  theft: "The loss appears only in the evening while nights stay clean, and it recurs at the same hour on consecutive days ⇒ unauthorised draw (illegal connection / motor).",
+  contamination: "Chlorine collapsed while turbidity spiked. The low-chlorine × high-turbidity interaction term pushes the Microbial Risk Index past 60 — the signature of pathogen ingress.",
+  chlorination_failure: "Low chlorine appeared first at the WTP outlet ⇒ one root-cause alert. As unchlorinated water travels downstream, village low-chlorine alerts are linked to it instead of flooding phones.",
+  groundwater_mixing: "TDS rose above the BIS 500 mg/L limit at the reservoir and every tap downstream of it ⇒ groundwater / borewell mixing at the reservoir.",
+  sensor_stuck: "The probe repeated the same raw value for 12 samples (3 h) ⇒ frozen sensor. It is excluded from risk scoring and a technician ticket is raised — no false health alarm.",
+  node_down: "One node fell silent while all others kept reporting ⇒ a node problem (power, vandalism), not a network outage.",
+  gateway_outage: "Every node went silent at once ⇒ gateway backhaul down. The gateway buffers frames locally and the analytics back-fill the gap when it returns.",
+  chronic_inequity: "The daily litres-per-person check shows this habitation far below the 100 LPCD target, day after day ⇒ structural under-supply (tail-end pressure).",
+};
+let tourSteps = [], tourI = 0, tourTimer = null;
+function buildTour() {
+  const ev = D.evaluation;
+  tourSteps = [{kind: "intro"}, ...ev.events.map(r => ({kind: "event", r})), {kind: "outro"}];
+}
+function startTour() { buildTour(); tourI = 0; $("tour").classList.add("on"); closeLab(); renderTour(); }
+function endTour() { $("tour").classList.remove("on"); clearInterval(tourTimer); tourTimer = null; $("tourauto").checked = false; }
+function renderTour() {
+  const st = tourSteps[tourI], ev = D.evaluation, n = tourSteps.length;
+  $("tourn").textContent = `${tourI + 1} / ${n}`;
+  $("tourdots").innerHTML = tourSteps.map((_, i) => `<i class="${i === tourI ? "on" : ""}"></i>`).join("");
+  $("tourprev").disabled = tourI === 0;
+  $("tournext").textContent = tourI === n - 1 ? "Finish" : "Next ›";
+  let html = "";
+  if (st.kind === "intro") {
+    $("tourhd").textContent = "🎬 Welcome to JalNetra";
+    html = `<h4>${esc(D.meta.title)}</h4><p style="margin:0">${D.meta.days} days of simulated telemetry. ${ev.events_total} real-world problems were secretly injected —
+      leaks, theft, contamination, failures. The AI only sees what real sensors would send. This tour shows how each problem was caught.</p>
+      <div class="ai">Tip: watch the map, the alert feed and the status timeline change at every step.</div>`;
+    stop(); setTime(D.meta.train_days * 24);
+  } else if (st.kind === "outro") {
+    $("tourhd").textContent = "✓ Summary";
+    const he = D.health.events || [];
+    html = `<h4>${ev.events_detected} of ${ev.events_total} problems detected · precision ${ev.precision == null ? "–" : (ev.precision * 100).toFixed(0) + "%"}</h4>
+      <p style="margin:0">Median time from problem to alert: <b>${ev.median_latency_min ?? "–"} min</b>.
+      ${he.length ? `Early warning gave health teams up to <b>${Math.max(...he.map(e => e.lead_time_h || 0))} h</b> before a case cluster would have been noticed.` : ""}</p>
+      <div class="ai">Now try the ⚗ Scenario Lab: switch problems off, make them smaller, add your own — and see whether JalNetra still catches them.</div>`;
+  } else {
+    const r = st.r, a = D.alerts.find(x => r.alert_ids.includes(x.id));
+    $("tourhd").textContent = `${r.event} · ${r.detected ? "detected" : "missed"}`;
+    const lat = r.latency_min == null ? "–" : r.latency_min >= 120 ? (r.latency_min / 60).toFixed(1) + " h" : r.latency_min + " min";
+    html = `<h4>${esc(r.description)}</h4>
+      <div>📍 ${esc(r.target_name)} · injected ${esc(r.start.slice(5))}</div>
+      <div>${r.detected ? `🔔 First alert ${esc(r.first_alert.slice(5))} — <b>${lat}</b> after it started` : "✗ Not detected in this run"}</div>
+      ${a ? `<div style="margin-top:6px">${sevBadge(a.severity)} <b>${esc(a.title)}</b>: ${esc(a.message)}</div>` : ""}
+      ${r.classification ? `<div style="margin-top:4px">${r.classification.correct ? "✓" : "✗"} Classified as <b>${esc(r.classification.expected)}</b>${r.classification.latency_h != null ? ` after ${r.classification.latency_h} h` : ""}</div>` : ""}
+      <div class="ai"><b>How the AI knew:</b> ${esc(AI_EXPLAIN[r.type] || "")}</div>`;
+    jumpEvent(r.event);
+  }
+  $("tourbody").innerHTML = html;
+}
+$("tourbtn").onclick = startTour; $("tourx").onclick = endTour;
+$("tournext").onclick = () => { if (tourI >= tourSteps.length - 1) return endTour(); tourI++; renderTour(); };
+$("tourprev").onclick = () => { if (tourI > 0) { tourI--; renderTour(); } };
+$("tourauto").onchange = e => {
+  clearInterval(tourTimer); tourTimer = null;
+  if (e.target.checked) tourTimer = setInterval(() => { if (tourI >= tourSteps.length - 1) { clearInterval(tourTimer); return; } tourI++; renderTour(); }, 8000);
+};
+
+/* ================================ HOW IT WORKS ================================ */
+function buildHow() {
+  const ev = D.evaluation, rad = D.radio, pw = D.power[0] || {};
+  const pdr = rad.length ? rad.reduce((s, r) => s + r.pdr, 0) / rad.length : 0;
+  const sfs = rad.map(r => r.sf), tot = D.bom.reduce((s, b) => s + b.inr, 0);
+  const stages = [["Sensor node", "ESP32 · 5 sensors · solar", "🔬"], ["LoRa radio", `IN865 · SF${Math.min(...sfs)}–${Math.max(...sfs)}`, "📡"],
+    ["Gateway", "store & forward · 4G", "🗼"], ["Cloud backend", "decode 17 B · SQLite", "☁"], ["AI engine", "risk · CUSUM · Isolation Forest", "🧠"],
+    ["Alerts & grid", "SMS · WhatsApp · dashboard", "📲"]];
+  const W = 1100, bw = 150, gap = (W - 40 - bw * stages.length) / (stages.length - 1), y = 40, bh = 86;
+  const boxes = stages.map(([t, s, ic], i) => { const x = 20 + i * (bw + gap);
+    return `<g><rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="14" fill="${C["surface-2"]}" stroke="${C.border}"/>
+      <text x="${x + bw / 2}" y="${y + 30}" text-anchor="middle" font-size="22">${ic}</text>
+      <text x="${x + bw / 2}" y="${y + 54}" text-anchor="middle" font-size="13.5" font-weight="650" fill="${C.text}">${t}</text>
+      <text x="${x + bw / 2}" y="${y + 72}" text-anchor="middle" font-size="10.5" fill="${C.muted}">${s}</text></g>`; }).join("");
+  const arrows = stages.slice(1).map((_, i) => { const x0 = 20 + i * (bw + gap) + bw + 4, x1 = x0 + gap - 8, yy = y + bh / 2;
+    return `<path id="ar${i}" d="M${x0} ${yy} L${x1} ${yy}" stroke="${C.muted}" stroke-width="1.6" marker-end="url(#ah)" fill="none"/>
+      <circle r="4.5" fill="${C.accent}"><animateMotion dur="${1.4 + i * .15}s" repeatCount="indefinite" begin="${i * .25}s"><mpath href="#ar${i}"/></animateMotion></circle>`; }).join("");
+  const svg = `<svg class="arch" viewBox="0 0 ${W} 170" role="img" aria-label="JalNetra data pipeline">
+    <defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8z" fill="${C.muted}"/></marker></defs>
+    <text x="20" y="22" font-size="12" fill="${C["text-2"]}">Every 15 minutes, for every node:</text>${arrows}${boxes}
+    <text x="20" y="160" font-size="11.5" fill="${C.muted}">Everything is simulated end-to-end — including faults, radio loss and outages — and scored against injected ground truth.</text></svg>`;
+  const he = D.health.events || [];
+  const cards = [
+    ["🔬", "Sensor node", "pH, ORP (→ free chlorine via pH), turbidity, TDS, temperature and a pulse flow meter on an ESP32. Sensors are power-gated; the node sleeps 96% of the time.",
+     `≈ ₹${tot.toLocaleString("en-IN")} per node · ${pw.avg_current_ma ?? "–"} mA average · ${pw.autonomy_days_no_sun ?? "–"} days without sun`],
+    ["📡", "LoRa + gateway", "17-byte frames over LoRa (IN865). Spreading factor chosen per site; weak sites get a Yagi and frame repetition. The gateway buffers data when 4G drops.",
+     `average delivery ${(pdr * 100).toFixed(1)}% · airtime ${Math.min(...rad.map(r => r.airtime_ms))}–${Math.max(...rad.map(r => r.airtime_ms))} ms`],
+    ["🧪", "Microbial Risk Index", "0–100 score: chlorine deficit + turbidity excess + their interaction (low Cl × high turbidity = pathogen ingress) + pH deviation + an anomaly boost.",
+     "green < 30 · amber 30–60 · red ≥ 60 for 30 min ⇒ contamination alert"],
+    ["💧", "Water balance + CUSUM", "For each pipe segment, (inflow − Σ outflows) / inflow is tested every 15 min with a one-sided CUSUM. Night-flow analysis separates leaks from theft.",
+     `${D.groups.length} monitored segments · ${D.groups.reduce((s, g) => s + g.lost_kl, 0).toFixed(0)} kL lost in incidents`],
+    ["🧠", "Isolation Forest", "A multivariate anomaly model (150 trees, pure NumPy) trained on the commissioning days catches unusual combinations the rules do not name.",
+     D.engine.ml_enabled ? "trained per run on the first days of data" : "disabled"],
+    ["🧭", "Root-cause reasoning", "Low chlorine at the WTP becomes one SOURCE alert; downstream alerts are linked. Node-offline vs gateway-offline is decided from who went silent.",
+     `${D.engine.linked_suppressed} alerts folded into root causes this run`],
+    ["📲", "Alerts", "Routed by role (Panchayat Secretary, ASHA, PHC, Mission Bhagiratha AE/DEE) in English + Telugu over SMS and WhatsApp, with cool-downs and escalation.",
+     `${D.alerts.length} alerts this run · precision ${ev.precision == null ? "–" : (ev.precision * 100).toFixed(0) + "%"}`],
+    ["✚", "Public-health link", "Water-quality alerts reach health workers before people fall ill: boil-water advisory, ORS stocking, line flushing.",
+     he.length ? `lead time ${he.map(e => e.lead_time_h + " h").join(" / ")} vs status quo` : "no health-linked events in this run"],
+  ];
+  $("p-how").innerHTML = `<div class="card"><h2>How JalNetra works <small>quantity · quality · integrity in one system</small></h2>${svg}</div>
+    <div class="how">${cards.map(([ic, t, p, m]) => `<div class="card"><h3><span class="ki">${ic}</span>${t}</h3><p>${p}</p><div class="m">${m}</div></div>`).join("")}</div>`;
+}
+
 /* ================================ BOOT ================================ */
 loadData(D); readTheme(); initMap();
-const hashTab = (location.hash.match(/tab=(\w+)/) || [])[1];
-showTab(TABS.some(t => t[0] === hashTab) ? hashTab : "balance");
+const HP = new URLSearchParams(location.hash.slice(1));
+showTab(TABS.some(t => t[0] === HP.get("tab")) ? HP.get("tab") : "balance");
 renderAll(false);
-if (location.hash.includes("lab")) openLab();
+if (HP.get("c") && nodeById[HP.get("c")]) cmp = HP.get("c");
+if (HP.get("n") && nodeById[HP.get("n")]) selectNode(HP.get("n"));
+else if (cmp) selectNode(sel);
+if (HP.get("t") != null && !isNaN(+HP.get("t"))) setTime(+HP.get("t"));
+hashReady = true;
+if (HP.has("lab")) openLab();
+if (HP.has("tour")) startTour();
 </script>
 </body>
 </html>

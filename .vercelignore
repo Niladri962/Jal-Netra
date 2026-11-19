@@ -9,3 +9,5 @@ firmware/
 *.db
 .venv/
 venv/
+tests/
+.github/

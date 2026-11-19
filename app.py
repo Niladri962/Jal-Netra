@@ -54,6 +54,10 @@ class Handler(BaseHTTPRequestHandler):
         u = urlparse(self.path)
         if u.path in ("/", "/index.html"):
             self._send(200, page(STATE["payload"]), "text/html; charset=utf-8")
+        elif u.path == "/pilot.html":
+            if "pilot" not in STATE:
+                STATE["pilot"] = simulate(config_for("pilot"))
+            self._send(200, page(STATE["pilot"]), "text/html; charset=utf-8")
         elif u.path == "/api/ping":
             self._json({"ok": True})
         elif u.path == "/api/config":

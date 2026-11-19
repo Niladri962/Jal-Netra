@@ -55,6 +55,15 @@ switch injected problems on or off, move them in time, resize them (leak L/min, 
 borewell share, ...), add your own, change the seed and the number of days, and then
 **re-run the whole pipeline** (physics → sensors → LoRa → AI → alerts) from the browser.
 
+Presenting it:
+
+* **🎬 Guided tour** (`G`) walks through every injected problem. At each step it shows what
+  happened, when JalNetra alerted, and *how the AI knew*. Ideal for a panel or interview demo.
+* **🔗 Share** copies a deep link that reopens the exact time, node and tab
+  (e.g. `#t=181&n=N10&tab=health`; add `&tour` to start the tour).
+* **🛈 How it works** shows an animated architecture diagram with live numbers from the run.
+* **⬇ CSV** exports a node's hourly data or the full alert log.
+
 Interface features:
 
 * Time replay with play/speed controls and an alert rail above the slider.
@@ -74,6 +83,16 @@ Interface features:
 
 Village names and coordinates are **illustrative** (placed in Siddipet district) and do not
 describe any real village's water.
+
+## Tests
+
+```bash
+pip install -r requirements.txt pytest
+pytest -q          # 17 tests: payload codec, LoRa airtime, risk index, Isolation Forest, Lab, end-to-end detection
+```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs the tests, a 5-seed detection benchmark and the
+site build on every push.
 
 ## Results (mandal scenario, default seed 7)
 
