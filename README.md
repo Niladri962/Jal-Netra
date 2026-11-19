@@ -1,5 +1,7 @@
 # JalNetra — IoT Virtual Water Grid (complete project simulation)
 
+JalNetra is an IoT-enabled virtual water grid for Telangana’s rural drinking water network. Low-cost solar sensor nodes track pH, chlorine, turbidity, TDS and flow, connecting over LoRa or GSM to a GIS dashboard. AI flags leaks, theft and contamination risk early, sending SMS alerts to panchayats and health workers before outbreaks.
+
 An end-to-end, software-only simulation of **JalNetra**: low-cost solar IoT nodes on Telangana's
 Mission Bhagiratha drinking-water network, a LoRa radio network, a cloud backend, an AI layer and
 a GIS "virtual grid" dashboard. The simulation measures **quantity, quality and integrity** together.
