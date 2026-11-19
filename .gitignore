@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Generated simulation outputs (re-create with: python run_simulation.py)
+output/
+*.db
+
+# Deployment
+.vercel/

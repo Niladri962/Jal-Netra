@@ -1,0 +1,11 @@
+# local-only entry points (Vercel serves public/ + api/ functions)
+app.py
+run_simulation.py
+build_site.py
+requirements-dev.txt
+output/
+firmware/
+**/__pycache__/
+*.db
+.venv/
+venv/

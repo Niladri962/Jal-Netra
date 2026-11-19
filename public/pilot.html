@@ -1,0 +1,1037 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JalNetra Virtual Grid</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+/* ===================== theme tokens: "monsoon water" ===================== */
+:root{
+  color-scheme:light;
+  --page:#eef3f6; --surface:#ffffff; --surface-2:#f3f7fa; --surface-3:#e7eef3; --border:#d9e3ea;
+  --text:#0e1c2a; --text-2:#46596a; --muted:#7a8c9c;
+  --brand-a:#0b3954; --brand-b:#0e7c86; --accent:#0e7c86; --accent-ink:#ffffff; --accent-soft:#d7eef0;
+  --series-1:#2a78d6; --series-2:#eb6834;
+  --good:#0ca30c; --warning:#fab219; --critical:#d03b3b; --offline:#8a97a3;
+  --good-a:rgba(12,163,12,.07); --warn-a:rgba(250,178,25,.11); --crit-a:rgba(208,59,59,.08);
+  --band:rgba(208,59,59,.10); --grid:rgba(14,28,42,.07); --pipe:#2a78d6; --pipe-ok:#c3d6e6;
+  --shadow:0 1px 2px rgba(14,28,42,.06),0 4px 14px rgba(14,28,42,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --page:#08131d; --surface:#0f1e2b; --surface-2:#132536; --surface-3:#1a3043; --border:#1f3548;
+    --text:#e8f1f7; --text-2:#a9bccb; --muted:#7590a6;
+    --brand-a:#0a2a3f; --brand-b:#0b5d66; --accent:#3cc4cf; --accent-ink:#06222a; --accent-soft:#123a44;
+    --series-1:#3987e5; --series-2:#d95926;
+    --good-a:rgba(12,163,12,.10); --warn-a:rgba(250,178,25,.10); --crit-a:rgba(208,59,59,.13);
+    --band:rgba(230,103,103,.16); --grid:rgba(232,241,247,.07); --pipe:#3987e5; --pipe-ok:#2c4a63;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#08131d; --surface:#0f1e2b; --surface-2:#132536; --surface-3:#1a3043; --border:#1f3548;
+  --text:#e8f1f7; --text-2:#a9bccb; --muted:#7590a6;
+  --brand-a:#0a2a3f; --brand-b:#0b5d66; --accent:#3cc4cf; --accent-ink:#06222a; --accent-soft:#123a44;
+  --series-1:#3987e5; --series-2:#d95926;
+  --good-a:rgba(12,163,12,.10); --warn-a:rgba(250,178,25,.10); --crit-a:rgba(208,59,59,.13);
+  --band:rgba(230,103,103,.16); --grid:rgba(232,241,247,.07); --pipe:#3987e5; --pipe-ok:#2c4a63;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--page);color:var(--text);
+  font:14px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,"Noto Sans Telugu","Nirmala UI",sans-serif}
+button,select,input{font:inherit;color:inherit}
+.wrap{max-width:1560px;margin:0 auto;padding:0 16px 32px}
+
+/* ---------- brand band ---------- */
+.brand{background:linear-gradient(115deg,var(--brand-a) 0%,var(--brand-b) 100%);color:#fff;position:relative;overflow:hidden}
+.brand:after{content:"";position:absolute;inset:auto -10% -60px -10%;height:90px;opacity:.12;
+  background:radial-gradient(60% 90px at 50% 0,#fff,transparent)}
+.brand .in{max-width:1560px;margin:0 auto;padding:16px;display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;position:relative;z-index:1}
+.logo{display:flex;align-items:center;gap:12px;flex:1 1 420px;min-width:0}
+.logo h1{margin:0;font-size:21px;letter-spacing:-.01em}
+.logo h1 span{font-weight:400;opacity:.8}
+.logo .sub{font-size:12.5px;opacity:.82;max-width:760px}
+.brand .sp{flex:1}
+.bbtn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:9px;padding:7px 12px;cursor:pointer}
+.bbtn:hover{background:rgba(255,255,255,.2)}
+.bbtn.solid{background:#fff;color:var(--brand-a);border-color:#fff;font-weight:600}
+.seg{display:inline-flex;border:1px solid rgba(255,255,255,.25);border-radius:9px;overflow:hidden}
+.seg button{background:transparent;border:0;color:#fff;padding:7px 10px;cursor:pointer;opacity:.75}
+.seg button.on{background:rgba(255,255,255,.2);opacity:1;font-weight:600}
+
+/* ---------- control bar ---------- */
+.ctrl{position:sticky;top:0;z-index:900;background:color-mix(in srgb,var(--page) 88%,transparent);backdrop-filter:blur(8px);
+  padding:10px 0;margin-bottom:6px}
+.ctrl .card{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 14px}
+.btn{background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:6px 11px;cursor:pointer}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600;min-width:92px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.track{flex:1;min-width:240px;position:relative;padding-top:16px}
+.rail{position:absolute;left:8px;right:8px;top:0;height:14px}
+.rail .tk{position:absolute;top:1px;transform:translateX(-50%);cursor:pointer;line-height:0}
+.rail .tk:hover{transform:translateX(-50%) scale(1.5)}
+.rail .gt{position:absolute;top:5px;height:4px;border-radius:2px;background:var(--band)}
+input[type=range]{width:100%;accent-color:var(--accent);margin:0}
+.clock{font-variant-numeric:tabular-nums;font-weight:650;min-width:170px}
+.clock small{display:block;font-weight:400;color:var(--muted);font-size:11.5px}
+.kbd{font-size:11px;color:var(--muted)}
+
+/* ---------- cards / kpis ---------- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
+.card h2{font-size:14px;margin:0 0 10px;font-weight:650;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.card h2 small{color:var(--muted);font-weight:400}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;margin-bottom:12px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:11px 13px;box-shadow:var(--shadow);
+  cursor:pointer;text-align:left;transition:border-color .15s,transform .15s}
+.kpi:hover{border-color:var(--accent);transform:translateY(-1px)}
+.kpi .l{color:var(--text-2);font-size:12px}
+.kpi .v{font-size:25px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi .s{color:var(--muted);font-size:11.5px}
+.kpi .bar{display:flex;height:6px;border-radius:3px;overflow:hidden;margin:6px 0 3px;gap:2px;background:var(--surface-3)}
+.kpi .bar i{display:block;height:100%}
+.main{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:12px;margin-bottom:12px}
+#map{height:540px;border-radius:10px;background:var(--surface-2)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;color:var(--text-2);font-size:12px;align-items:center}
+.legend .sw{display:inline-flex;align-items:center;gap:5px}
+.legend label{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+
+/* ---------- map markers ---------- */
+.mk{position:relative;line-height:0;transition:transform .15s}
+.mk:hover{transform:scale(1.15)}
+.mk.sel:before{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--text)}
+.mk.red:after{content:"";position:absolute;inset:-4px;border-radius:50%;border:3px solid var(--critical);animation:pulse 1.6s ease-out infinite}
+@keyframes pulse{from{transform:scale(.8);opacity:.9}to{transform:scale(2.1);opacity:0}}
+@media (prefers-reduced-motion:reduce){.mk.red:after{animation:none;opacity:.5}}
+.nodelabel{background:transparent;border:0;box-shadow:none;color:var(--text);font-weight:700;font-size:11px;padding:0;
+  text-shadow:0 0 3px var(--surface),0 0 3px var(--surface),0 0 4px var(--surface)}
+.nodelabel:before{display:none}
+.leaflet-container{font:inherit;background:var(--surface-2)}
+.leaflet-tooltip{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:9px;box-shadow:var(--shadow)}
+.leaflet-tooltip-top:before{border-top-color:var(--border)}
+.leaflet-bar a{background:var(--surface);color:var(--text);border-color:var(--border)}
+
+/* ---------- alert feed ---------- */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center}
+.chip{border:1px solid var(--border);background:var(--surface-2);border-radius:999px;padding:3px 10px;font-size:12px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:5px}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
+.chip b{font-variant-numeric:tabular-nums}
+.search{flex:1;min-width:120px;border:1px solid var(--border);background:var(--surface-2);border-radius:999px;padding:4px 12px;font-size:12.5px}
+.feed{height:520px;overflow:auto;padding-right:4px}
+.al{border:1px solid var(--border);border-left:4px solid var(--border);border-radius:10px;padding:8px 10px;margin-bottom:8px;cursor:pointer;
+  background:var(--surface);transition:background .15s}
+.al:hover{background:var(--surface-2)}
+.al.critical{border-left-color:var(--critical)}.al.warning{border-left-color:var(--warning)}.al.maintenance{border-left-color:var(--offline)}
+.al .top{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--text-2);flex-wrap:wrap}
+.al .t{font-weight:650;font-size:13px;margin:3px 0 2px}
+.al .m,.al .te{font-size:12.5px;color:var(--text-2)}
+.al .te{margin-top:3px}
+.al .foot{display:flex;gap:8px;align-items:center;margin-top:6px;font-size:11.5px;color:var(--muted)}
+.al .foot .sp{flex:1}
+.al.resolved,.al.acked{opacity:.58}
+.al.new{animation:flash 1.2s ease-out}
+@keyframes flash{from{background:var(--accent-soft)}to{background:var(--surface)}}
+.ack{border:1px solid var(--border);background:var(--surface-2);border-radius:7px;padding:2px 8px;font-size:11.5px;cursor:pointer}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:650;color:var(--text)}
+.tag{font-size:11px;border:1px solid var(--border);border-radius:6px;padding:0 5px;color:var(--text-2)}
+
+/* ---------- matrix ---------- */
+.mxwrap{position:relative}
+#matrix{display:block;width:100%;cursor:crosshair}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border);border-radius:9px;
+  padding:6px 9px;font-size:12px;box-shadow:var(--shadow);white-space:nowrap;z-index:5;display:none}
+
+/* ---------- node detail ---------- */
+.dhead{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:12px}
+.dhead h2{margin:0;font-size:16px}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 10px 2px 6px;font-size:12px;font-weight:650;
+  background:var(--surface-2);border:1px solid var(--border)}
+.dsel{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.dsel select{background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:5px 9px}
+.vals{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px;margin-bottom:14px}
+.val{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:7px 10px}
+.val .l{font-size:11.5px;color:var(--text-2);display:flex;align-items:center;gap:4px}
+.val .v{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.val .v small{font-size:11px;font-weight:400;color:var(--muted)}
+.val .g{height:4px;border-radius:2px;background:var(--surface-3);margin-top:5px;overflow:hidden}
+.val .g i{display:block;height:100%;border-radius:2px}
+.charts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.ch{min-width:0}
+.ch .ct{font-size:12.5px;font-weight:650}
+.ch .cn{font-size:11.5px;color:var(--muted);margin-bottom:4px;min-height:16px}
+.ch .box{position:relative;height:175px}
+
+/* ---------- tabs ---------- */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 10px}
+.tabs button{background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.pane{display:none}.pane.on{display:block}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+th{color:var(--text-2);font-weight:600;font-size:12px}
+td.n,th.n{text-align:right}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--surface-2)}
+.tblwrap{overflow-x:auto}
+.ok{color:var(--good);font-weight:650}.no{color:var(--critical);font-weight:650}
+.note{color:var(--muted);font-size:12px;margin-top:8px}
+.msg{border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin-bottom:8px;white-space:pre-wrap;font-size:12.5px}
+.msg .h{color:var(--muted);font-size:11.5px;margin-bottom:3px}
+code,.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.hex{word-break:break-all;background:var(--surface-2);border-radius:8px;padding:8px;margin:6px 0}
+.gb.hl{outline:2px solid var(--accent);outline-offset:4px;border-radius:8px}
+
+/* ---------- lab drawer ---------- */
+.scrim{position:fixed;inset:0;background:rgba(5,15,25,.45);z-index:1500;display:none}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--surface);z-index:1600;
+  transform:translateX(105%);transition:transform .25s ease;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.25)}
+.drawer.open{transform:none}.drawer.open~.scrim{display:block}
+.drawer header{padding:16px;background:linear-gradient(115deg,var(--brand-a),var(--brand-b));color:#fff}
+.drawer header h3{margin:0 0 2px;font-size:17px}
+.drawer header p{margin:0;font-size:12.5px;opacity:.85}
+.drawer .body{flex:1;overflow:auto;padding:14px 16px}
+.drawer .footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center}
+.row{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.row label{font-size:12.5px;color:var(--text-2);min-width:70px}
+.row input[type=number],.row select{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:5px 8px}
+.ev{border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:var(--surface-2)}
+.ev.off{opacity:.55}
+.ev .eh{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ev .eh b{flex:1;font-size:13px}
+.ev .f{display:grid;grid-template-columns:118px 1fr 78px;gap:4px 8px;align-items:center;font-size:12px;margin-top:4px}
+.ev .f span:last-child{text-align:right;font-variant-numeric:tabular-nums;color:var(--text)}
+.ev .f label{color:var(--text-2)}
+.ev select{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:3px 6px;max-width:100%}
+.ev .hint{font-size:11.5px;color:var(--muted);margin-top:6px}
+.ev .warn{font-size:11.5px;color:var(--critical);margin-top:4px}
+.switch{position:relative;width:34px;height:20px;flex:none}
+.switch input{opacity:0;width:0;height:0}
+.switch i{position:absolute;inset:0;background:var(--surface-3);border-radius:20px;cursor:pointer;transition:.2s;border:1px solid var(--border)}
+.switch i:before{content:"";position:absolute;width:14px;height:14px;left:2px;top:2px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.switch input:checked+i{background:var(--accent)}
+.switch input:checked+i:before{transform:translateX(14px)}
+.x{border:0;background:transparent;cursor:pointer;color:var(--muted);font-size:16px}
+.banner{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:8px 10px;font-size:12.5px;margin-bottom:12px}
+.overlay{position:fixed;inset:0;background:rgba(5,15,25,.55);z-index:2000;display:none;align-items:center;justify-content:center}
+.overlay .box{background:var(--surface);border-radius:16px;padding:22px 26px;text-align:center;box-shadow:var(--shadow);min-width:280px}
+.spin{width:38px;height:38px;border-radius:50%;border:4px solid var(--surface-3);border-top-color:var(--accent);margin:0 auto 12px;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--text);color:var(--surface);
+  border-radius:12px;padding:10px 16px;font-size:13px;z-index:2100;transition:transform .3s;box-shadow:var(--shadow);max-width:90vw}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+@media (max-width:1050px){.main,.grid2{grid-template-columns:1fr}.charts{grid-template-columns:repeat(2,minmax(0,1fr))}.feed{height:420px}#map{height:420px}}
+@media (max-width:640px){.charts{grid-template-columns:1fr}.clock{min-width:0}.kbd{display:none}}
+</style>
+</head>
+<body>
+<div class="brand"><div class="in">
+  <div class="logo">
+    <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3C14 12 8 18 8 25a12 12 0 0 0 24 0c0-7-6-13-12-22z" fill="rgba(255,255,255,.95)"/>
+      <circle cx="20" cy="25" r="6.2" fill="none" stroke="#0e7c86" stroke-width="2.4"/><circle cx="20" cy="25" r="2.4" fill="#0b3954"/></svg>
+    <div><h1>JalNetra <span>· Virtual Water Grid</span></h1><div class="sub" id="subtitle"></div></div>
+  </div>
+  <select id="jump" class="bbtn" aria-label="Jump to injected event" style="max-width:260px"></select>
+  <div class="seg" role="group" aria-label="Alert language"><button data-l="en">EN</button><button data-l="te">తెలుగు</button><button data-l="both" class="on">Both</button></div>
+  <button class="bbtn" id="theme" title="Toggle light / dark">◐ Theme</button>
+  <button class="bbtn solid" id="labbtn" title="Inject your own events and re-run (L)">⚗ Scenario Lab</button>
+</div></div>
+
+<div class="wrap">
+  <div class="ctrl"><div class="card">
+    <button class="btn primary" id="play">▶ Play</button>
+    <button class="btn" id="back" title="Back 1 hour (←)">−1 h</button>
+    <button class="btn" id="fwd" title="Forward 1 hour (→)">+1 h</button>
+    <select class="btn" id="speed" aria-label="Playback speed"><option value="160">1×</option><option value="70" selected>2×</option><option value="25">5×</option><option value="8">10×</option></select>
+    <div class="track"><div class="rail" id="rail"></div><input type="range" id="slider" min="0" value="0" aria-label="Simulation time"></div>
+    <div class="clock" id="clock"></div>
+    <span class="kbd">Space play · ←/→ hour · Shift day · L lab</span>
+  </div></div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="main">
+    <div class="card">
+      <h2>Live map <small>nodes = water status · pipes = water-balance state · click a node or pipe</small></h2>
+      <div id="map"></div>
+      <div class="legend" id="maplegend"></div>
+    </div>
+    <div class="card">
+      <h2>Alert feed <small id="feedcount"></small></h2>
+      <div class="chips" id="chips"></div>
+      <div class="chips"><input class="search" id="search" placeholder="Search alerts, places, types…" aria-label="Search alerts">
+        <label class="chip"><input type="checkbox" id="showres" checked style="margin:0"> resolved</label></div>
+      <div class="feed" id="feed"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <h2>Network status timeline <small>every node and pipe segment, hour by hour · hover to inspect · click to jump</small></h2>
+    <div class="mxwrap" id="mxwrap"><canvas id="matrix"></canvas><div class="tip" id="mxtip"></div></div>
+    <div class="legend" id="mxlegend"></div>
+  </div>
+
+  <div class="card">
+    <div class="dhead">
+      <h2 id="dtitle"></h2><span id="dpill"></span><span class="note" id="dsub" style="margin:0"></span>
+      <div class="dsel"><select id="nodesel" aria-label="Select node"></select><select id="cmpsel" aria-label="Compare with node"></select></div>
+    </div>
+    <div class="vals" id="vals"></div>
+    <div class="charts" id="nodecharts"></div>
+    <div class="legend"><span class="sw"><svg width="22" height="10"><rect width="22" height="10" fill="var(--band)"/></svg>Injected ground-truth event</span>
+      <span class="sw"><svg width="22" height="10"><rect width="7" height="10" fill="var(--good-a)"/><rect x="7" width="8" height="10" fill="var(--warn-a)"/><rect x="15" width="7" height="10" fill="var(--crit-a)"/></svg>Safe / watch / unsafe zone</span>
+      <span class="sw"><svg width="22" height="10"><line x1="11" x2="11" y1="0" y2="10" stroke="var(--text)" stroke-width="1.5"/></svg>Current time</span>
+      <span class="note" style="margin:0">Hover syncs all charts · click a chart to jump to that hour.</span></div>
+  </div>
+
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <section class="pane" id="p-balance"></section>
+  <section class="pane" id="p-equity"></section>
+  <section class="pane" id="p-health"></section>
+  <section class="pane" id="p-eval"></section>
+  <section class="pane" id="p-net"></section>
+  <section class="pane" id="p-msg"></section>
+</div>
+
+<aside class="drawer" id="drawer" aria-label="Scenario Lab">
+  <header><h3>⚗ Scenario Lab</h3><p>Switch problems on/off, move them in time, change their size, add your own — then re-run the whole system.</p></header>
+  <div class="body" id="labbody"></div>
+  <div class="footer"><button class="btn primary" id="runbtn">▶ Run simulation</button><button class="btn" id="labclose">Close</button><span class="note" id="labmsg" style="margin:0"></span></div>
+</aside>
+<div class="scrim" id="scrim"></div>
+<div class="overlay" id="overlay"><div class="box"><div class="spin"></div><b>Simulating…</b><div class="note" id="ovmsg">physics → sensors → LoRa → AI → alerts</div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+let D = {"meta":{"title":"School pilot test-bed - 3 nodes","region":"ZPHS school line, Telangana (illustrative)","key":"pilot","start":"2026-12-07T00:00:00","days":4,"step_min":15,"train_days":1,"hours":96,"runtime_s":1.2},"hours":["2026-12-07 00:00","2026-12-07 01:00","2026-12-07 02:00","2026-12-07 03:00","2026-12-07 04:00","2026-12-07 05:00","2026-12-07 06:00","2026-12-07 07:00","2026-12-07 08:00","2026-12-07 09:00","2026-12-07 10:00","2026-12-07 11:00","2026-12-07 12:00","2026-12-07 13:00","2026-12-07 14:00","2026-12-07 15:00","2026-12-07 16:00","2026-12-07 17:00","2026-12-07 18:00","2026-12-07 19:00","2026-12-07 20:00","2026-12-07 21:00","2026-12-07 22:00","2026-12-07 23:00","2026-12-08 00:00","2026-12-08 01:00","2026-12-08 02:00","2026-12-08 03:00","2026-12-08 04:00","2026-12-08 05:00","2026-12-08 06:00","2026-12-08 07:00","2026-12-08 08:00","2026-12-08 09:00","2026-12-08 10:00","2026-12-08 11:00","2026-12-08 12:00","2026-12-08 13:00","2026-12-08 14:00","2026-12-08 15:00","2026-12-08 16:00","2026-12-08 17:00","2026-12-08 18:00","2026-12-08 19:00","2026-12-08 20:00","2026-12-08 21:00","2026-12-08 22:00","2026-12-08 23:00","2026-12-09 00:00","2026-12-09 01:00","2026-12-09 02:00","2026-12-09 03:00","2026-12-09 04:00","2026-12-09 05:00","2026-12-09 06:00","2026-12-09 07:00","2026-12-09 08:00","2026-12-09 09:00","2026-12-09 10:00","2026-12-09 11:00","2026-12-09 12:00","2026-12-09 13:00","2026-12-09 14:00","2026-12-09 15:00","2026-12-09 16:00","2026-12-09 17:00","2026-12-09 18:00","2026-12-09 19:00","2026-12-09 20:00","2026-12-09 21:00","2026-12-09 22:00","2026-12-09 23:00","2026-12-10 00:00","2026-12-10 01:00","2026-12-10 02:00","2026-12-10 03:00","2026-12-10 04:00","2026-12-10 05:00","2026-12-10 06:00","2026-12-10 07:00","2026-12-10 08:00","2026-12-10 09:00","2026-12-10 10:00","2026-12-10 11:00","2026-12-10 12:00","2026-12-10 13:00","2026-12-10 14:00","2026-12-10 15:00","2026-12-10 16:00","2026-12-10 17:00","2026-12-10 18:00","2026-12-10 19:00","2026-12-10 20:00","2026-12-10 21:00","2026-12-10 22:00","2026-12-10 23:00"],"nodes":[{"id":"P1","name":"Sump / overhead-tank outlet","village":"ZPHS School (pilot)","kind":"source","lat":18.102,"lon":78.852,"parent":null,"population":0,"meter":"YF-DN25 hall-effect"},{"id":"P2","name":"Drinking-water tap row","village":"ZPHS School (pilot)","kind":"tap","lat":18.1023,"lon":78.85245,"parent":"P1","population":450,"meter":"YF-DN25 hall-effect"},{"id":"P3","name":"Mid-day-meal kitchen tap","village":"ZPHS School (pilot)","kind":"tap","lat":18.10175,"lon":78.8525,"parent":"P1","population":450,"meter":"YF-DN25 hall-effect"}],"gateway":{"name":"Single-channel gateway in school lab","lat":18.1021,"lon":78.85215,"backhaul":"School Wi-Fi with 4G dongle fallback"},"series":{"P1":{"cl":[0.815,0.862,0.829,0.926,0.864,0.857,0.805,0.907,0.844,0.873,0.823,0.842,0.917,0.865,0.966,0.867,0.861,0.839,0.932,0.912,0.829,0.893,0.849,0.82,0.86,0.782,0.905,0.84,0.874,0.849,0.867,0.924,0.804,0.83,0.823,0.94,0.879,0.812,0.876,0.849,0.802,0.863,0.853,0.854,0.812,0.828,0.99,0.942,0.866,0.963,0.867,0.884,0.833,0.836,0.896,0.883,0.862,0.935,0.908,1.016,0.893,0.824,0.959,0.868,0.882,0.804,0.846,0.85,0.812,0.817,0.898,0.816,0.826,0.86,0.789,0.867,0.794,0.82,0.862,0.848,0.904,0.273,0.046,0.053,0.046,0.704,0.908,0.917,0.767,0.827,0.782,0.872,0.882,0.848,0.912,0.879],"cl_true":[0.847,0.852,0.872,0.846,0.819,0.798,0.807,0.886,0.881,0.877,0.863,0.839,0.877,0.883,0.908,0.905,0.881,0.885,0.886,0.868,0.881,0.845,0.839,0.841,0.858,0.868,0.884,0.863,0.873,0.878,0.859,0.896,0.902,0.908,0.899,0.897,0.89,0.861,0.863,0.875,0.855,0.835,0.838,0.846,0.855,0.897,0.908,0.906,0.883,0.902,0.891,0.871,0.86,0.871,0.876,0.892,0.918,0.911,0.923,0.905,0.91,0.906,0.932,0.885,0.862,0.844,0.815,0.817,0.835,0.827,0.856,0.845,0.829,0.837,0.838,0.86,0.836,0.864,0.871,0.866,0.859,0.247,0.047,0.052,0.047,0.674,0.867,0.863,0.816,0.795,0.813,0.835,0.855,0.86,0.861,0.881],"turb":[0.47,0.55,0.5,0.55,0.67,0.6,0.53,0.55,0.6,0.53,0.53,0.5,0.53,0.53,0.53,0.53,0.53,0.62,0.62,0.55,0.53,0.47,0.47,0.45,0.4,0.4,0.45,0.5,0.47,0.53,0.45,0.55,0.55,0.53,0.55,0.62,0.57,0.57,0.55,0.55,0.62,0.6,0.57,0.6,0.55,0.57,0.57,0.55,0.6,0.53,0.47,0.53,0.5,0.35,0.38,0.43,0.45,0.38,0.47,0.47,0.4,0.38,0.45,0.45,0.53,0.55,0.47,0.47,0.42,0.4,0.43,0.43,0.43,0.47,0.43,0.53,0.5,0.57,0.53,0.55,0.45,0.53,0.6,0.57,0.6,0.57,0.55,0.5,0.62,0.47,0.5,0.5,0.53,0.5,0.5,0.45],"tds":[301.0,299.0,300.0,297.0,292.0,297.0,299.0,310.0,303.0,300.0,298.0,302.0,295.0,296.0,300.0,299.0,300.0,295.0,299.0,300.0,302.0,298.0,304.0,301.0,303.0,298.0,298.0,292.0,299.0,303.0,302.0,300.0,301.0,299.0,297.0,299.0,300.0,303.0,301.0,300.0,304.0,300.0,304.0,304.0,306.0,306.0,300.0,303.0,300.0,297.0,299.0,300.0,300.0,302.0,305.0,299.0,301.0,298.0,298.0,303.0,299.0,305.0,300.0,302.0,306.0,304.0,307.0,299.0,304.0,306.0,303.0,304.0,304.0,306.0,304.0,296.0,294.0,302.0,302.0,302.0,300.0,303.0,301.0,298.0,301.0,301.0,300.0,296.0,296.0,296.0,293.0,297.0,303.0,296.0,298.0,300.0],"ph":[7.39,7.43,7.41,7.43,7.43,7.47,7.49,7.48,7.44,7.43,7.43,7.45,7.46,7.46,7.45,7.41,7.43,7.38,7.41,7.41,7.44,7.45,7.51,7.48,7.48,7.41,7.4,7.35,7.36,7.34,7.34,7.39,7.4,7.37,7.39,7.42,7.41,7.4,7.44,7.42,7.41,7.43,7.39,7.4,7.37,7.39,7.33,7.34,7.33,7.33,7.34,7.34,7.31,7.33,7.32,7.32,7.31,7.36,7.41,7.37,7.38,7.35,7.35,7.39,7.39,7.39,7.42,7.44,7.42,7.42,7.45,7.45,7.43,7.4,7.37,7.39,7.35,7.34,7.35,7.36,7.33,7.33,7.3,7.36,7.35,7.36,7.42,7.43,7.42,7.45,7.43,7.37,7.36,7.36,7.36,7.39],"flow":[0.0,0.0,0.0,0.0,0.0,0.0,0.7,3.2,6.2,7.3,7.9,10.3,11.0,8.8,6.5,4.5,1.9,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.7,3.1,6.1,6.9,8.9,12.3,13.3,10.3,6.6,4.8,1.8,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.7,3.2,6.1,7.3,7.6,9.1,10.3,8.3,6.5,4.7,1.8,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.8,3.4,6.5,7.5,7.8,9.7,11.0,9.5,7.0,5.1,2.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"mri":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.6,0.0,2.2,0.7,0.0,5.2,4.5,0.0,0.2,1.8,1.0,0.0,0.5,0.0,0.0,2.3,0.0,0.0,0.0,2.2,1.8,2.6,4.7,1.9,2.7,1.1,0.3,0.2,3.2,9.6,7.2,3.0,6.6,2.2,7.8,3.8,7.0,5.0,3.7,4.8,0.2,0.8,0.0,0.0,0.5,0.3,0.0,0.0,1.0,2.8,0.0,1.8,1.2,4.3,5.0,1.4,12.1,30.8,34.0,33.1,16.0,0.1,0.0,2.0,0.0,0.1,0.0,0.0,0.2,0.0,0.2],"batt":[4040.0,4040.0,4040.0,4040.0,4040.0,4040.0,4040.0,4052.0,4085.0,4125.0,4178.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4198.0,4190.0,4190.0,4190.0,4190.0,4190.0,4190.0,4192.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4198.0,4190.0,4190.0,4190.0,4190.0,4190.0,4190.0,4190.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4198.0,4190.0,4190.0,4190.0,4190.0,4190.0,4190.0,4192.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4198.0],"status":["green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","amber","amber","amber","amber","amber","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","amber","amber","amber","amber","green","green","green","green","green","green","green","green","green","green"]},"P2":{"cl":[0.76,0.831,0.775,0.831,0.789,0.812,0.77,0.869,0.885,0.883,0.885,0.781,0.913,0.944,0.861,0.86,0.835,0.839,0.838,0.859,0.831,0.822,0.816,0.839,0.825,0.857,0.898,0.844,0.841,0.866,0.813,0.911,0.865,0.918,0.91,0.902,0.869,0.773,0.808,null,null,0.839,0.829,0.822,0.779,0.845,0.877,0.881,0.826,0.88,0.896,0.796,0.833,0.851,0.831,0.869,0.866,0.878,0.833,0.879,0.895,0.848,0.857,0.889,0.821,0.764,0.805,0.798,0.831,0.835,0.814,0.834,0.814,0.757,0.815,0.793,0.906,0.797,0.848,0.887,0.863,0.442,0.044,0.053,0.047,0.489,0.862,0.855,0.851,0.739,0.776,0.81,0.862,0.848,0.854,0.831],"cl_true":[0.819,0.819,0.835,0.841,0.803,0.78,0.77,0.856,0.86,0.856,0.845,0.819,0.84,0.856,0.879,0.881,0.846,0.837,0.852,0.845,0.834,0.84,0.811,0.809,0.826,0.833,0.857,0.845,0.831,0.855,0.835,0.873,0.883,0.878,0.879,0.87,0.87,0.841,0.84,0.846,0.827,0.797,0.808,0.807,0.821,0.84,0.872,0.888,0.859,0.865,0.869,0.85,0.841,0.832,0.849,0.868,0.893,0.893,0.891,0.89,0.879,0.88,0.903,0.868,0.836,0.813,0.798,0.774,0.802,0.798,0.809,0.831,0.806,0.814,0.8,0.831,0.816,0.819,0.846,0.856,0.842,0.436,0.044,0.051,0.046,0.456,0.844,0.839,0.808,0.764,0.772,0.791,0.809,0.834,0.825,0.849],"turb":[0.5,0.6,0.57,0.6,0.57,0.57,0.53,0.55,0.62,0.7,0.55,0.57,0.62,0.62,0.57,0.6,0.42,0.53,0.45,0.53,0.6,0.7,0.55,0.45,0.62,0.57,0.57,0.55,0.62,0.6,0.7,0.62,0.62,0.53,0.55,0.6,0.53,0.35,0.45,null,null,0.53,0.5,0.53,0.45,0.47,0.53,0.55,0.55,0.6,0.65,0.7,0.7,0.57,0.7,0.67,0.6,0.57,0.62,0.7,0.62,0.6,0.62,0.67,0.62,0.57,0.5,0.6,0.67,0.65,0.57,0.62,0.62,0.6,0.62,0.47,0.47,0.53,0.57,0.55,0.53,0.6,0.55,0.57,0.5,0.5,0.5,0.68,0.7,0.6,0.57,0.5,0.6,0.68,0.55,0.57],"tds":[285.0,285.0,284.0,285.0,284.0,287.0,284.0,289.0,286.0,285.0,288.0,283.0,290.0,282.0,284.0,284.0,280.0,284.0,279.0,282.0,280.0,285.0,280.0,287.0,285.0,286.0,288.0,279.0,285.0,285.0,286.0,282.0,280.0,287.0,287.0,285.0,286.0,290.0,286.0,null,null,285.0,286.0,286.0,287.0,282.0,288.0,285.0,285.0,288.0,288.0,284.0,285.0,286.0,288.0,283.0,276.0,278.0,282.0,284.0,284.0,281.0,282.0,282.0,286.0,286.0,287.0,284.0,285.0,284.0,288.0,285.0,285.0,284.0,287.0,288.0,280.0,282.0,285.0,283.0,282.0,280.0,280.0,284.0,286.0,284.0,288.0,287.0,285.0,286.0,284.0,285.0,286.0,285.0,285.0,288.0],"ph":[7.42,7.4,7.41,7.43,7.4,7.44,7.44,7.41,7.38,7.4,7.43,7.42,7.42,7.47,7.42,7.44,7.39,7.43,7.38,7.39,7.43,7.45,7.38,7.43,7.46,7.44,7.43,7.46,7.47,7.4,7.39,7.41,7.41,7.38,7.33,7.35,7.34,7.34,7.31,null,null,7.36,7.43,7.38,7.39,7.4,7.39,7.37,7.36,7.37,7.35,7.43,7.45,7.45,7.42,7.4,7.43,7.42,7.41,7.42,7.4,7.4,7.41,7.47,7.45,7.41,7.45,7.46,7.46,7.46,7.44,7.41,7.4,7.39,7.36,7.33,7.38,7.39,7.38,7.42,7.43,7.39,7.42,7.39,7.42,7.41,7.4,7.42,7.43,7.44,7.46,7.47,7.39,7.42,7.43,7.45],"flow":[0.0,0.0,0.0,0.0,0.0,0.0,0.3,1.7,3.3,4.0,4.2,5.3,5.9,4.8,3.3,2.4,0.9,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.2,1.7,3.4,3.9,4.0,5.1,5.6,4.7,3.5,null,null,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.2,1.7,3.4,4.1,4.4,5.4,5.9,4.8,3.8,2.7,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.3,1.9,3.8,4.3,4.2,5.1,5.9,5.2,4.0,2.8,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"mri":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.4,2.2,0.0,0.0,5.1,3.7,1.5,7.6,4.2,null,null,1.1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,2.8,0.0,0.0,0.0,0.8,0.3,0.1,0.1,0.0,0.0,0.0,0.0,0.0,1.2,3.8,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.9,0.9,0.0,1.0,0.0,0.0,3.4,21.6,27.3,27.0,14.8,1.1,0.1,4.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"batt":[4038.0,4030.0,4030.0,4030.0,4030.0,4030.0,4032.0,4050.0,4085.0,4140.0,4192.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4198.0,4190.0,4190.0,4190.0,4190.0,4190.0,4190.0,4192.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,null,null,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4198.0,4190.0,4190.0,4190.0,4190.0,4190.0,4190.0,4192.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4198.0,4190.0,4190.0,4190.0,4190.0,4190.0,4190.0,4190.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4198.0],"status":["green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","offline","offline","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","amber","amber","amber","amber","green","green","green","green","green","green","green","green","green","green"]},"P3":{"cl":[0.851,0.788,0.818,0.852,0.808,0.805,0.767,0.815,0.884,0.857,0.808,0.773,0.803,0.882,0.862,0.93,0.839,0.789,0.865,0.847,0.792,0.862,0.783,0.79,0.772,0.788,0.918,0.842,0.806,0.814,0.816,0.884,0.855,0.946,0.832,0.924,0.94,0.81,0.863,0.767,0.876,0.786,0.826,0.777,0.764,0.811,0.813,0.942,0.808,0.834,0.996,0.873,0.819,0.783,0.894,0.901,0.899,0.886,0.615,0.046,0.501,0.922,0.912,0.907,0.801,0.805,0.866,0.764,0.743,0.801,0.825,0.796,0.77,0.831,0.774,0.885,0.74,0.743,0.854,0.831,0.821,0.42,0.041,0.05,0.047,0.501,0.848,0.865,0.812,0.756,0.745,0.77,0.795,0.815,0.799,0.769],"cl_true":[0.807,0.809,0.817,0.833,0.797,0.777,0.757,0.854,0.857,0.852,0.841,0.816,0.836,0.852,0.874,0.881,0.842,0.814,0.837,0.834,0.815,0.837,0.799,0.797,0.809,0.82,0.838,0.838,0.82,0.839,0.829,0.862,0.88,0.874,0.875,0.866,0.866,0.837,0.836,0.837,0.821,0.785,0.788,0.794,0.804,0.817,0.858,0.871,0.854,0.847,0.859,0.844,0.83,0.816,0.835,0.868,0.889,0.889,0.569,0.044,0.465,0.876,0.899,0.865,0.819,0.798,0.791,0.763,0.781,0.788,0.789,0.818,0.801,0.795,0.792,0.812,0.811,0.801,0.831,0.844,0.838,0.434,0.043,0.05,0.045,0.454,0.84,0.836,0.801,0.757,0.752,0.77,0.794,0.815,0.816,0.828],"turb":[0.7,0.65,0.67,0.57,0.75,0.5,0.53,0.62,0.7,0.75,0.68,0.53,0.6,0.55,0.62,0.55,0.6,0.55,0.62,0.7,0.65,0.5,0.55,0.57,0.62,0.6,0.67,0.5,0.45,0.5,0.55,0.5,0.55,0.5,0.45,0.5,0.53,0.53,0.5,0.6,0.55,0.5,0.53,0.72,0.6,0.53,0.42,0.43,0.47,0.55,0.6,0.6,0.6,0.7,0.67,0.65,0.68,0.67,3.53,7.8,4.05,0.68,0.62,0.55,0.72,0.68,0.67,0.53,0.47,0.45,0.57,0.65,0.6,0.62,0.55,0.62,0.5,0.55,0.67,0.62,0.6,0.6,0.47,0.5,0.6,0.68,0.68,0.65,0.62,0.6,0.57,0.6,0.47,0.47,0.55,0.53],"tds":[286.0,280.0,285.0,285.0,282.0,285.0,286.0,282.0,282.0,281.0,287.0,282.0,288.0,285.0,291.0,284.0,282.0,290.0,286.0,289.0,292.0,294.0,299.0,295.0,293.0,290.0,296.0,289.0,290.0,292.0,290.0,292.0,291.0,289.0,288.0,289.0,289.0,287.0,290.0,287.0,284.0,284.0,284.0,288.0,292.0,288.0,294.0,294.0,288.0,289.0,287.0,284.0,283.0,284.0,282.0,285.0,293.0,286.0,314.0,368.0,326.0,288.0,288.0,285.0,285.0,286.0,284.0,284.0,286.0,288.0,290.0,291.0,289.0,287.0,287.0,289.0,287.0,283.0,286.0,290.0,290.0,286.0,288.0,293.0,294.0,292.0,292.0,290.0,288.0,290.0,290.0,288.0,291.0,292.0,291.0,290.0],"ph":[7.34,7.35,7.36,7.34,7.37,7.38,7.39,7.35,7.37,7.35,7.37,7.37,7.33,7.38,7.39,7.39,7.43,7.46,7.46,7.44,7.42,7.42,7.39,7.45,7.42,7.44,7.41,7.4,7.43,7.41,7.37,7.45,7.46,7.45,7.46,7.44,7.46,7.42,7.42,7.42,7.4,7.41,7.39,7.4,7.4,7.38,7.41,7.41,7.42,7.37,7.44,7.46,7.47,7.48,7.45,7.46,7.49,7.49,7.42,7.28,7.42,7.52,7.49,7.46,7.45,7.44,7.42,7.41,7.39,7.41,7.42,7.42,7.4,7.35,7.34,7.33,7.33,7.33,7.38,7.37,7.41,7.37,7.34,7.4,7.38,7.45,7.45,7.44,7.43,7.41,7.39,7.39,7.36,7.34,7.33,7.34],"flow":[0.0,0.0,0.0,0.0,0.0,0.0,0.1,1.4,2.8,3.1,3.5,4.5,5.0,4.2,3.0,2.0,0.8,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.1,1.3,2.5,3.0,3.5,4.0,4.5,3.8,3.0,2.0,0.7,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.1,1.4,2.7,3.1,3.2,3.9,4.4,3.4,2.7,2.0,0.7,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.1,1.4,2.7,3.3,3.4,4.4,5.0,4.1,3.0,2.1,0.8,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"mri":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.1,0.0,0.9,0.0,0.2,0.0,1.1,4.0,3.0,5.2,3.5,4.5,7.5,1.5,0.1,0.0,1.5,0.0,0.0,0.0,0.0,0.0,0.6,5.0,0.0,0.0,0.8,2.8,0.0,0.1,2.3,4.2,3.1,1.5,16.0,71.7,59.8,12.4,6.1,6.6,2.8,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.1,0.8,0.2,0.2,0.0,2.5,23.4,32.0,30.4,19.6,1.3,0.7,2.2,0.0,0.0,0.0,0.0,0.1,0.0,0.0],"batt":[4030.0,4030.0,4030.0,4030.0,4030.0,4022.0,4025.0,4035.0,4060.0,4095.0,4135.0,4175.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4198.0,4190.0,4190.0,4190.0,4190.0,4190.0,4190.0,4190.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4198.0,4190.0,4190.0,4190.0,4190.0,4190.0,4190.0,4190.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4198.0,4190.0,4190.0,4190.0,4190.0,4190.0,4190.0,4190.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4200.0,4198.0],"status":["green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","red","red","red","red","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","green","amber","amber","amber","amber","green","green","green","green","green","green","green","green","green","green"]}},"groups":[{"id":"G-P1","name":"Supply line: Sump / overhead-tank outlet","parent":"P1","children":["P2","P3"],"ratio":[null,null,null,null,null,null,null,0.0,1.48,2.08,1.52,3.58,2.07,-1.46,0.91,4.19,3.03,null,null,null,null,null,null,null,null,null,null,null,null,null,null,1.94,3.12,0.34,4.19,24.83,24.79,20.82,4.2,1.16,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,1.66,1.79,1.17,0.16,1.02,-1.04,1.16,1.67,0.34,1.93,null,null,null,null,null,null,null,null,null,null,null,null,null,null,0.23,-0.48,-0.12,1.68,1.53,0.92,2.09,0.7,2.58,4.41,null,null,null,null,null,null,null],"mu":2.5,"state":[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,1,1,1,1,1,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1],"lost_kl":0.5}],"events":[{"id":"T1","type":"leak","target":"G-P1","name":"Supply line: Sump / overhead-tank outlet","description":"Bench test: drain valve opened 3 L/min between meters","locations":["G-P1"],"from":34.5,"to":37.5,"window":null,"start":"08 Dec 10:30","end":"08 Dec 13:30"},{"id":"T2","type":"node_down","target":"P2","name":"Drinking-water tap row","description":"Bench test: battery disconnected on P2","locations":["P2"],"from":39.0,"to":41.0,"window":null,"start":"08 Dec 15:00","end":"08 Dec 17:00"},{"id":"T3","type":"contamination","target":"P3","name":"Mid-day-meal kitchen tap","description":"Bench test: kaolin + dechlorinated water in P3 test loop","locations":["P3"],"from":58.0,"to":60.5,"window":null,"start":"09 Dec 10:00","end":"09 Dec 12:30"},{"id":"T4","type":"chlorination_failure","target":"P1","name":"Sump / overhead-tank outlet","description":"Bench test: unchlorinated (dechlorinated) feed to sump","locations":["P1"],"from":81.0,"to":85.0,"window":null,"start":"10 Dec 09:00","end":"10 Dec 13:00"}],"alerts":[{"id":"A0001","time":"2026-12-08 10:45","data_ts":"2026-12-08 10:45","type":"WATER_LOSS","severity":"warning","location":"G-P1","location_name":"Supply line: Sump / overhead-tank outlet","village":"ZPHS School (pilot)","title":"Water loss detected","message":"Supply line: Sump / overhead-tank outlet: water-balance gap 1 L/min (10% of inflow, ~2 kL/day). Inspect segment between Sump / overhead-tank outlet and its outlets.","message_te":"Supply line: Sump / overhead-tank outlet: పైప్‌లైన్‌లో నీటి నష్టం - నిమిషానికి సుమారు 1 లీటర్లు. తనిఖీ చేయండి.","recipients":["Project mentor (science teacher)","Headmaster"],"status":"resolved","resolved_time":"2026-12-08 15:15","details":{"excess":1.133,"pct":10.3,"kld":1.632,"parent":"Sump / overhead-tank outlet","hour":"10:30","count":1},"h":34.75,"rh":39.25},{"id":"A0002","time":"2026-12-08 15:45","data_ts":"2026-12-08 15:45","type":"NODE_OFFLINE","severity":"maintenance","location":"P2","location_name":"Drinking-water tap row","village":"ZPHS School (pilot)","title":"Node offline","message":"Drinking-water tap row: no data for 60 min while gateway is healthy. Check power / solar / antenna.","message_te":"Drinking-water tap row: నోడ్ నుండి డేటా రావడం లేదు.","recipients":["Student build team","Headmaster"],"status":"resolved","resolved_time":"2026-12-08 17:00","details":{"mins":60},"h":39.75,"rh":41.0},{"id":"A0003","time":"2026-12-09 11:30","data_ts":"2026-12-09 11:30","type":"CONTAMINATION_RISK","severity":"critical","location":"P3","location_name":"Mid-day-meal kitchen tap","village":"ZPHS School (pilot)","title":"Contamination risk","message":"Mid-day-meal kitchen tap: water-borne disease risk 79/100. Free chlorine 0.15 mg/L, turbidity 7.2 NTU. Issue boil-water advisory, flush & super-chlorinate line, ASHA to stock ORS.","message_te":"Mid-day-meal kitchen tap: నీరు కలుషితమయ్యే ప్రమాదం (79/100). క్లోరిన్ 0.15 mg/L, టర్బిడిటీ 7.2 NTU. నీటిని కాచి చల్లార్చి తాగండి.","recipients":["Headmaster","Project mentor (science teacher)"],"status":"resolved","resolved_time":"2026-12-09 14:30","details":{"mri":79.075,"cl":0.149,"turb":7.23},"h":59.5,"rh":62.5},{"id":"A0004","time":"2026-12-10 10:15","data_ts":"2026-12-10 10:15","type":"SOURCE_CHLORINATION_FAILURE","severity":"critical","location":"P1","location_name":"Sump / overhead-tank outlet","village":"ZPHS School (pilot)","title":"Chlorination failure at source","message":"Sump / overhead-tank outlet: free chlorine 0.12 mg/L at WTP outlet (norm >= 1.0). Check dosing pump. All downstream villages will receive unchlorinated water in ~2-1 h.","message_te":"Sump / overhead-tank outlet: శుద్ధి కేంద్రంలో క్లోరినేషన్ విఫలమైంది (క్లోరిన్ 0.12 mg/L). దిగువ గ్రామాలకు హెచ్చరిక.","recipients":["Project mentor (science teacher)","Headmaster"],"status":"resolved","resolved_time":"2026-12-10 15:00","details":{"cl":0.116,"lag":"~2-1 h"},"h":82.25,"rh":87.0}],"outbox":[{"time":"2026-12-08 10:45","alert_id":"A0001","channel":"WhatsApp","recipient":"Project mentor (science teacher)","text":"[JalNetra AMBER] Water loss detected\nSupply line: Sump / overhead-tank outlet: water-balance gap 1 L/min (10% of inflow, ~2 kL/day). Inspect segment between Sump / overhead-tank outlet and its outlets.\nSupply line: Sump / overhead-tank outlet: పైప్‌లైన్‌లో నీటి నష్టం - నిమిషానికి సుమారు 1 లీటర్లు. తనిఖీ చేయండి.\nRef A0001 | 08 Dec 10:45","segments":0,"status":"delivered"},{"time":"2026-12-08 10:45","alert_id":"A0001","channel":"SMS","recipient":"Project mentor (science teacher)","text":"JalNetra AMBER: Supply line: Sump / overhead-tank outlet: పైప్‌లైన్‌లో నీటి నష్టం - నిమిషానికి సుమారు 1 లీటర్లు. తనిఖీ చేయండి. Ref A0001","segments":3,"status":"delivered"},{"time":"2026-12-08 10:45","alert_id":"A0001","channel":"WhatsApp","recipient":"Headmaster","text":"[JalNetra AMBER] Water loss detected\nSupply line: Sump / overhead-tank outlet: water-balance gap 1 L/min (10% of inflow, ~2 kL/day). Inspect segment between Sump / overhead-tank outlet and its outlets.\nSupply line: Sump / overhead-tank outlet: పైప్‌లైన్‌లో నీటి నష్టం - నిమిషానికి సుమారు 1 లీటర్లు. తనిఖీ చేయండి.\nRef A0001 | 08 Dec 10:45","segments":0,"status":"delivered"},{"time":"2026-12-08 10:45","alert_id":"A0001","channel":"SMS","recipient":"Headmaster","text":"JalNetra AMBER: Supply line: Sump / overhead-tank outlet: పైప్‌లైన్‌లో నీటి నష్టం - నిమిషానికి సుమారు 1 లీటర్లు. తనిఖీ చేయండి. Ref A0001","segments":3,"status":"delivered"},{"time":"2026-12-08 15:45","alert_id":"A0002","channel":"WhatsApp","recipient":"Student build team","text":"[JalNetra MAINT] Node offline\nDrinking-water tap row: no data for 60 min while gateway is healthy. Check power / solar / antenna.\nDrinking-water tap row: నోడ్ నుండి డేటా రావడం లేదు.\nRef A0002 | 08 Dec 15:45","segments":0,"status":"delivered"},{"time":"2026-12-08 15:45","alert_id":"A0002","channel":"WhatsApp","recipient":"Headmaster","text":"[JalNetra MAINT] Node offline\nDrinking-water tap row: no data for 60 min while gateway is healthy. Check power / solar / antenna.\nDrinking-water tap row: నోడ్ నుండి డేటా రావడం లేదు.\nRef A0002 | 08 Dec 15:45","segments":0,"status":"delivered"},{"time":"2026-12-09 11:30","alert_id":"A0003","channel":"WhatsApp","recipient":"Headmaster","text":"[JalNetra RED] Contamination risk\nMid-day-meal kitchen tap: water-borne disease risk 79/100. Free chlorine 0.15 mg/L, turbidity 7.2 NTU. Issue boil-water advisory, flush & super-chlorinate line, ASHA to stock ORS.\nMid-day-meal kitchen tap: నీరు కలుషితమయ్యే ప్రమాదం (79/100). క్లోరిన్ 0.15 mg/L, టర్బిడిటీ 7.2 NTU. నీటిని కాచి చల్లార్చి తాగండి.\nRef A0003 | 09 Dec 11:30","segments":0,"status":"delivered"},{"time":"2026-12-09 11:30","alert_id":"A0003","channel":"SMS","recipient":"Headmaster","text":"JalNetra RED: Mid-day-meal kitchen tap: నీరు కలుషితమయ్యే ప్రమాదం (79/100). క్లోరిన్ 0.15 mg/L, టర్బిడిటీ 7.2 NTU. నీటిని కాచి చల్లార్చి తాగండి. Ref A0003","segments":3,"status":"delivered"},{"time":"2026-12-09 11:30","alert_id":"A0003","channel":"WhatsApp","recipient":"Project mentor (science teacher)","text":"[JalNetra RED] Contamination risk\nMid-day-meal kitchen tap: water-borne disease risk 79/100. Free chlorine 0.15 mg/L, turbidity 7.2 NTU. Issue boil-water advisory, flush & super-chlorinate line, ASHA to stock ORS.\nMid-day-meal kitchen tap: నీరు కలుషితమయ్యే ప్రమాదం (79/100). క్లోరిన్ 0.15 mg/L, టర్బిడిటీ 7.2 NTU. నీటిని కాచి చల్లార్చి తాగండి.\nRef A0003 | 09 Dec 11:30","segments":0,"status":"delivered"},{"time":"2026-12-09 11:30","alert_id":"A0003","channel":"SMS","recipient":"Project mentor (science teacher)","text":"JalNetra RED: Mid-day-meal kitchen tap: నీరు కలుషితమయ్యే ప్రమాదం (79/100). క్లోరిన్ 0.15 mg/L, టర్బిడిటీ 7.2 NTU. నీటిని కాచి చల్లార్చి తాగండి. Ref A0003","segments":3,"status":"delivered"},{"time":"2026-12-09 14:30","alert_id":"A0003","channel":"WhatsApp","recipient":"Headmaster","text":"[JalNetra] RESOLVED Contamination risk - Mid-day-meal kitchen tap back to normal at 09 Dec 14:30.","segments":0,"status":"delivered"},{"time":"2026-12-09 14:30","alert_id":"A0003","channel":"WhatsApp","recipient":"Project mentor (science teacher)","text":"[JalNetra] RESOLVED Contamination risk - Mid-day-meal kitchen tap back to normal at 09 Dec 14:30.","segments":0,"status":"delivered"},{"time":"2026-12-10 10:15","alert_id":"A0004","channel":"WhatsApp","recipient":"Project mentor (science teacher)","text":"[JalNetra RED] Chlorination failure at source\nSump / overhead-tank outlet: free chlorine 0.12 mg/L at WTP outlet (norm >= 1.0). Check dosing pump. All downstream villages will receive unchlorinated water in ~2-1 h.\nSump / overhead-tank outlet: శుద్ధి కేంద్రంలో క్లోరినేషన్ విఫలమైంది (క్లోరిన్ 0.12 mg/L). దిగువ గ్రామాలకు హెచ్చరిక.\nRef A0004 | 10 Dec 10:15","segments":0,"status":"delivered"},{"time":"2026-12-10 10:15","alert_id":"A0004","channel":"SMS","recipient":"Project mentor (science teacher)","text":"JalNetra RED: Sump / overhead-tank outlet: శుద్ధి కేంద్రంలో క్లోరినేషన్ విఫలమైంది (క్లోరిన్ 0.12 mg/L). దిగువ గ్రామాలకు హెచ్చరిక. Ref A0004","segments":3,"status":"delivered"},{"time":"2026-12-10 10:15","alert_id":"A0004","channel":"WhatsApp","recipient":"Headmaster","text":"[JalNetra RED] Chlorination failure at source\nSump / overhead-tank outlet: free chlorine 0.12 mg/L at WTP outlet (norm >= 1.0). Check dosing pump. All downstream villages will receive unchlorinated water in ~2-1 h.\nSump / overhead-tank outlet: శుద్ధి కేంద్రంలో క్లోరినేషన్ విఫలమైంది (క్లోరిన్ 0.12 mg/L). దిగువ గ్రామాలకు హెచ్చరిక.\nRef A0004 | 10 Dec 10:15","segments":0,"status":"delivered"},{"time":"2026-12-10 10:15","alert_id":"A0004","channel":"SMS","recipient":"Headmaster","text":"JalNetra RED: Sump / overhead-tank outlet: శుద్ధి కేంద్రంలో క్లోరినేషన్ విఫలమైంది (క్లోరిన్ 0.12 mg/L). దిగువ గ్రామాలకు హెచ్చరిక. Ref A0004","segments":3,"status":"delivered"},{"time":"2026-12-10 15:00","alert_id":"A0004","channel":"WhatsApp","recipient":"Project mentor (science teacher)","text":"[JalNetra] RESOLVED Chlorination failure at source - Sump / overhead-tank outlet back to normal at 10 Dec 15:00.","segments":0,"status":"delivered"},{"time":"2026-12-10 15:00","alert_id":"A0004","channel":"WhatsApp","recipient":"Headmaster","text":"[JalNetra] RESOLVED Chlorination failure at source - Sump / overhead-tank outlet back to normal at 10 Dec 15:00.","segments":0,"status":"delivered"}],"equity":{"rows":[{"date":"2026-12-07","node":"P2","village":"ZPHS School (pilot)","lpcd":4.8,"target":5,"pct":96.3,"equity":false},{"date":"2026-12-07","node":"P3","village":"ZPHS School (pilot)","lpcd":4.1,"target":4,"pct":101.7,"equity":false},{"date":"2026-12-08","node":"P2","village":"ZPHS School (pilot)","lpcd":4.6,"target":5,"pct":92.0,"equity":false},{"date":"2026-12-08","node":"P3","village":"ZPHS School (pilot)","lpcd":3.8,"target":4,"pct":95.9,"equity":false},{"date":"2026-12-09","node":"P2","village":"ZPHS School (pilot)","lpcd":5.0,"target":5,"pct":99.5,"equity":false},{"date":"2026-12-09","node":"P3","village":"ZPHS School (pilot)","lpcd":3.7,"target":4,"pct":91.7,"equity":false}],"summary":[]},"health":{"daily":[],"events":[]},"evaluation":{"events":[{"event":"T1","type":"leak","target":"G-P1","target_name":"Supply line: Sump / overhead-tank outlet","description":"Bench test: drain valve opened 3 L/min between meters","start":"2026-12-08 10:30","end":"2026-12-08 13:30","expected":["WATER_LOSS"],"detected":true,"first_alert":"2026-12-08 10:45","latency_min":15,"n_alerts":1,"alert_ids":["A0001"],"classification":null},{"event":"T2","type":"node_down","target":"P2","target_name":"Drinking-water tap row","description":"Bench test: battery disconnected on P2","start":"2026-12-08 15:00","end":"2026-12-08 17:00","expected":["NODE_OFFLINE"],"detected":true,"first_alert":"2026-12-08 15:45","latency_min":45,"n_alerts":1,"alert_ids":["A0002"],"classification":null},{"event":"T3","type":"contamination","target":"P3","target_name":"Mid-day-meal kitchen tap","description":"Bench test: kaolin + dechlorinated water in P3 test loop","start":"2026-12-09 10:00","end":"2026-12-09 12:30","expected":["CONTAMINATION_RISK"],"detected":true,"first_alert":"2026-12-09 11:30","latency_min":90,"n_alerts":1,"alert_ids":["A0003"],"classification":null},{"event":"T4","type":"chlorination_failure","target":"P1","target_name":"Sump / overhead-tank outlet","description":"Bench test: unchlorinated (dechlorinated) feed to sump","start":"2026-12-10 09:00","end":"2026-12-10 13:00","expected":["SOURCE_CHLORINATION_FAILURE"],"detected":true,"first_alert":"2026-12-10 10:15","latency_min":75,"n_alerts":1,"alert_ids":["A0004"],"classification":null}],"events_total":4,"events_detected":4,"recall":1.0,"alerts_total":4,"false_alerts":0,"precision":1.0,"false_alert_list":[],"classification_accuracy":null,"median_latency_min":75},"radio":[{"node":"P1","distance_km":0.02,"sf":7,"antenna":"2 dBi whip","nb_trans":1,"rssi_dbm":-53.9,"snr_db":10.0,"airtime_ms":71.9,"sent":384,"received":382,"pdr":0.9948,"duty_cycle_pct":0.008},{"node":"P2","distance_km":0.04,"sf":7,"antenna":"2 dBi whip","nb_trans":1,"rssi_dbm":-44.2,"snr_db":10.0,"airtime_ms":71.9,"sent":376,"received":374,"pdr":0.9947,"duty_cycle_pct":0.008},{"node":"P3","distance_km":0.05,"sf":7,"antenna":"2 dBi whip","nb_trans":1,"rssi_dbm":-65.2,"snr_db":10.0,"airtime_ms":71.9,"sent":384,"received":383,"pdr":0.9974,"duty_cycle_pct":0.008}],"power":[{"node":"P1","min_soc_pct":81.7,"final_soc_pct":99.4,"avg_current_ma":5.56,"autonomy_days_no_sun":45.0,"harvest_mah_day":3074.0,"use_mah_day":133.0},{"node":"P2","min_soc_pct":81.2,"final_soc_pct":99.4,"avg_current_ma":5.56,"autonomy_days_no_sun":45.0,"harvest_mah_day":3392.0,"use_mah_day":133.0},{"node":"P3","min_soc_pct":80.5,"final_soc_pct":99.4,"avg_current_ma":5.56,"autonomy_days_no_sun":45.0,"harvest_mah_day":2431.0,"use_mah_day":133.0}],"payload":{"node":"P1","hex":"15 00 28 00 02 E7 02 43 00 06 01 2C 00 49 01 17 A6","fields":{"node":21,"seq":40,"flags":0,"ph_x100":743,"orp_mv":579,"turb_x10":6,"tds":300,"flow_x10":73,"temp_x10":279,"batt":166}},"engine":{"linked_suppressed":3,"cooldown_suppressed":0,"ml_enabled":true},"bom":[{"item":"ESP32-WROOM-32 dev board","role":"Controller, deep sleep 10 uA","inr":450},{"item":"SX1276 LoRa module 865 MHz + 2 dBi antenna","role":"Radio (IN865)","inr":750},{"item":"Analog pH sensor kit + probe (gravity type)","role":"pH 0-14","inr":2800},{"item":"Analog ORP sensor kit + probe","role":"Free-chlorine proxy via ORP","inr":4200},{"item":"Analog turbidity sensor","role":"0-3000 NTU (field-calibrated w/ formazin)","inr":900},{"item":"Analog TDS sensor (temperature-compensated)","role":"0-1000+ ppm","inr":900},{"item":"DS18B20 waterproof temperature probe","role":"TDS / ORP compensation","inr":150},{"item":"YF-DN25 hall-effect flow sensor (1\")","role":"Pulse flow meter for tap branch","inr":900},{"item":"ADS1115 16-bit ADC","role":"Cleaner analog reads than ESP32 ADC","inr":350},{"item":"6 V 3 W solar panel + CN3791 MPPT charger","role":"Power harvest","inr":750},{"item":"2 x 18650 Li-ion 3000 mAh + holder","role":"45 days autonomy without sun","inr":600},{"item":"IP65 enclosure, flow cell, glands, MOSFET, PCB","role":"Packaging + sensor power gating","inr":1100}],"lab":{"scenario":"pilot","scenarios":["mandal","pilot"],"seed":11,"days":4,"min_days":2,"max_days":7,"train_days":1,"start":"2026-12-07T00:00:00","types":{"leak":{"label":"Pipe leak / burst","mag":["lpm","Leak size (L/min)",5,80,1],"window":false,"hint":"Runs through a night (00-05 h) to be confirmed as a leak by minimum-night-flow.","targets":[{"id":"G-P1","name":"Supply line: Sump / overhead-tank outlet"}]},"theft":{"label":"Illegal tapping (daily window)","mag":["lpm","Draw (L/min)",20,200,5],"window":true,"hint":"Needs >= 2 evenings for the recurring-pattern (theft) classification.","targets":[{"id":"G-P1","name":"Supply line: Sump / overhead-tank outlet"}]},"contamination":{"label":"Sewage ingress / contamination","mag":["turb_add","Added turbidity (NTU)",1,25,0.5],"window":false,"hint":"Chlorine is consumed; risk = low chlorine x high turbidity.","targets":[{"id":"P1","name":"P1 Sump / overhead-tank outlet"},{"id":"P2","name":"P2 Drinking-water tap row"},{"id":"P3","name":"P3 Mid-day-meal kitchen tap"}]},"chlorination_failure":{"label":"Chlorination failure at WTP","mag":["dose","Chlorine left in dose (mg/L)",0.0,0.8,0.02],"window":false,"hint":"Travels downstream with water age; expect one root-cause alert.","targets":[{"id":"P1","name":"P1 Sump / overhead-tank outlet"}]},"groundwater_mixing":{"label":"Saline borewell mixing","mag":["fraction","Borewell share of supply",0.1,0.8,0.05],"window":false,"hint":"Raises TDS at the target and everything downstream.","targets":[{"id":"P2","name":"P2 Drinking-water tap row"},{"id":"P3","name":"P3 Mid-day-meal kitchen tap"}]},"sensor_stuck":{"label":"Frozen sensor (pH)","mag":null,"window":false,"hint":"Needs >= 3 h to be told apart from a genuinely steady reading.","targets":[{"id":"P1","name":"P1 Sump / overhead-tank outlet"},{"id":"P2","name":"P2 Drinking-water tap row"},{"id":"P3","name":"P3 Mid-day-meal kitchen tap"}]},"node_down":{"label":"Node power loss / vandalism","mag":null,"window":false,"hint":"Flagged after 1 h of silence while the gateway is healthy.","targets":[{"id":"P1","name":"P1 Sump / overhead-tank outlet"},{"id":"P2","name":"P2 Drinking-water tap row"},{"id":"P3","name":"P3 Mid-day-meal kitchen tap"}]},"gateway_outage":{"label":"Gateway 4G backhaul outage","mag":null,"window":false,"hint":"Gateway buffers frames; analytics back-fill when it returns.","targets":[{"id":"GW","name":"Single-channel gateway in school lab"}]}},"events":[{"id":"T1","type":"leak","target":"G-P1","start_h":34.5,"duration_h":3.0,"window":null,"mag":3.0,"enabled":true,"description":"Bench test: drain valve opened 3 L/min between meters"},{"id":"T2","type":"node_down","target":"P2","start_h":39.0,"duration_h":2.0,"window":null,"mag":null,"enabled":true,"description":"Bench test: battery disconnected on P2"},{"id":"T3","type":"contamination","target":"P3","start_h":58.0,"duration_h":2.5,"window":null,"mag":9.0,"enabled":true,"description":"Bench test: kaolin + dechlorinated water in P3 test loop"},{"id":"T4","type":"chlorination_failure","target":"P1","start_h":81.0,"duration_h":4.0,"window":null,"mag":0.05,"enabled":true,"description":"Bench test: unchlorinated (dechlorinated) feed to sump"}]}};
+const SERVED = location.protocol.startsWith("http");
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+let H, T0, nodeById, groupById, cur = 0, sel = null, cmp = "", timer = null, hoverIdx = null, C = {};
+let sevFilter = "all", search = "", lang = "both", showRes = true;
+const acked = new Set();
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = (v, d = 2) => v == null ? "–" : Number(v).toFixed(d);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const isDark = () => document.documentElement.dataset.theme ? document.documentElement.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+function readTheme() {
+  ["page","surface","surface-2","surface-3","border","text","text-2","muted","accent","series-1","series-2","good","warning","critical","offline",
+   "good-a","warn-a","crit-a","band","grid","pipe","pipe-ok"].forEach(k => C[k] = css("--" + k));
+}
+const hourDate = h => new Date(T0.getTime() + h * 3600e3);
+const fmtDay = h => { const d = hourDate(h); return `${d.getDate()} ${MON[d.getMonth()]}`; };
+const fmtTime = h => { const d = hourDate(h); return `${fmtDay(h)} ${String(d.getHours()).padStart(2, "0")}:00`; };
+const hexA = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; };
+
+function loadData(d) {
+  D = d; H = D.hours; T0 = new Date(D.meta.start);
+  nodeById = Object.fromEntries(D.nodes.map(n => [n.id, n]));
+  groupById = Object.fromEntries(D.groups.map(g => [g.id, g]));
+  $("slider").max = H.length - 1;
+  $("subtitle").textContent = `${D.meta.title} · ${D.meta.region} · ${D.meta.days} days @ ${D.meta.step_min}-min telemetry · first ${D.meta.train_days} day(s) = AI commissioning`;
+  if (sel && !nodeById[sel]) sel = null;
+  if (cmp && !nodeById[cmp]) cmp = "";
+  acked.clear();
+}
+
+/* ---------- status vocabulary: colour + shape + label ---------- */
+const STATUS = {green: {label: "Safe", c: "good"}, amber: {label: "Watch", c: "warning"}, red: {label: "Unsafe", c: "critical"}, offline: {label: "Offline", c: "offline"}};
+function shape(st, size = 22) {
+  const c = C[STATUS[st].c], s = C.surface;
+  if (st === "red") return `<svg width="${size}" height="${size}" viewBox="0 0 22 22"><rect x="3" y="3" width="16" height="16" rx="3.5" fill="${c}" stroke="${s}" stroke-width="2"/><path d="M11 7v5" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="11" cy="15.2" r="1.3" fill="#fff"/></svg>`;
+  if (st === "amber") return `<svg width="${size}" height="${size}" viewBox="0 0 22 22"><path d="M11 2.2 L20.6 19 H1.4 Z" fill="${c}" stroke="${s}" stroke-width="2" stroke-linejoin="round"/></svg>`;
+  if (st === "offline") return `<svg width="${size}" height="${size}" viewBox="0 0 22 22"><circle cx="11" cy="11" r="7.5" fill="${s}" stroke="${c}" stroke-width="3"/><path d="M7.5 14.5l7-7" stroke="${c}" stroke-width="2"/></svg>`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 22 22"><circle cx="11" cy="11" r="8.5" fill="${c}" stroke="${s}" stroke-width="2"/><path d="M7.3 11.2l2.4 2.4 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+const SEV = {critical: {label: "Critical", st: "red"}, warning: {label: "Warning", st: "amber"}, maintenance: {label: "Maintenance", st: "offline"}, info: {label: "Info", st: "green"}};
+const sevBadge = s => `<span class="badge">${shape(SEV[s].st, 14)}${SEV[s].label}</span>`;
+const pill = st => `<span class="pill">${shape(st, 15)}${STATUS[st].label}</span>`;
+
+/* ---------- chart plugin: zones, event bands, thresholds, cursor, synced hover ---------- */
+Chart.register({
+  id: "jn",
+  beforeDatasetsDraw(chart, _a, o) {
+    const {ctx, chartArea: a, scales: {x, y}} = chart; ctx.save();
+    (o.zones || []).forEach(z => {
+      const y0 = z.to == null ? a.top : clamp(y.getPixelForValue(z.to), a.top, a.bottom);
+      const y1 = z.from == null ? a.bottom : clamp(y.getPixelForValue(z.from), a.top, a.bottom);
+      if (y1 > y0) { ctx.fillStyle = C[z.c]; ctx.fillRect(a.left, y0, a.right - a.left, y1 - y0); }
+    });
+    (o.bands || []).forEach(b => {
+      const x0 = Math.max(x.getPixelForValue(b.from), a.left), x1 = Math.min(x.getPixelForValue(b.to), a.right);
+      if (x1 > x0) { ctx.fillStyle = C.band; ctx.fillRect(x0, a.top, x1 - x0, a.bottom - a.top); }
+    });
+    (o.lines || []).forEach(l => {
+      const py = y.getPixelForValue(l.y); if (py < a.top || py > a.bottom) return;
+      ctx.strokeStyle = C.muted; ctx.setLineDash([4, 3]); ctx.lineWidth = 1.1;
+      ctx.beginPath(); ctx.moveTo(a.left, py); ctx.lineTo(a.right, py); ctx.stroke(); ctx.setLineDash([]);
+      if (l.label) { ctx.fillStyle = C.muted; ctx.font = "10.5px Segoe UI, system-ui"; ctx.textAlign = "right"; ctx.fillText(l.label, a.right - 3, py - 3); }
+    });
+    ctx.restore();
+  },
+  afterDatasetsDraw(chart, _a, o) {
+    const {ctx, chartArea: a, scales: {x}} = chart; ctx.save();
+    if (o.sync && hoverIdx != null) {
+      const px = x.getPixelForValue(hoverIdx);
+      if (px >= a.left && px <= a.right) { ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(px, a.top); ctx.lineTo(px, a.bottom); ctx.stroke(); }
+    }
+    if (o.cursor != null) {
+      const px = x.getPixelForValue(o.cursor);
+      if (px >= a.left && px <= a.right) { ctx.strokeStyle = C.text; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(px, a.top); ctx.lineTo(px, a.bottom); ctx.stroke(); }
+    }
+    ctx.restore();
+  }
+});
+
+function baseOpts({yMin, yMax, legend = false, xTime = true, yTitle, sync = false}) {
+  Chart.defaults.color = C["text-2"];
+  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  return {
+    responsive: true, maintainAspectRatio: false, animation: false, normalized: true,
+    interaction: {mode: "index", intersect: false},
+    onClick: xTime ? (e, _els, chart) => setTime(Math.round(chart.scales.x.getValueForPixel(e.x))) : undefined,
+    onHover: sync ? (e, _els, chart) => { hoverIdx = clamp(Math.round(chart.scales.x.getValueForPixel(e.x)), 0, H.length - 1);
+      nodeCharts.forEach(c => c !== chart && c.draw()); } : undefined,
+    plugins: {
+      legend: {display: legend, position: "top", align: "end", labels: {boxWidth: 14, boxHeight: 3, color: C["text-2"], font: {size: 11}}},
+      tooltip: {backgroundColor: C.surface, titleColor: C.text, bodyColor: C["text-2"], borderColor: C.border, borderWidth: 1, padding: 9,
+                cornerRadius: 9, callbacks: xTime ? {title: it => it.length ? fmtTime(it[0].parsed.x) : ""} : {}},
+      jn: {bands: [], lines: [], zones: [], cursor: xTime ? cur : null, sync},
+    },
+    scales: {
+      x: xTime ? {type: "linear", min: 0, max: H.length - 1, grid: {color: C.grid, drawTicks: false}, border: {display: false},
+                  ticks: {stepSize: 24, maxRotation: 0, autoSkip: true, font: {size: 10.5}, callback: v => v % 24 === 0 ? fmtDay(v) : ""}}
+               : {grid: {display: false}, border: {color: C.border}, ticks: {font: {size: 11}}},
+      y: {min: yMin, max: yMax, grid: {color: C.grid}, border: {display: false}, ticks: {font: {size: 10.5}, maxTicksLimit: 5},
+          title: yTitle ? {display: true, text: yTitle, font: {size: 11}} : {display: false}},
+    },
+  };
+}
+const pts = arr => arr.map((v, i) => ({x: i, y: v}));
+function areaFill(color) {
+  return ctx => { const {chart} = ctx, a = chart.chartArea; if (!a) return null;
+    const g = chart.ctx.createLinearGradient(0, a.top, 0, a.bottom); g.addColorStop(0, hexA(color, .26)); g.addColorStop(1, hexA(color, 0)); return g; };
+}
+const lineDs = (label, arr, color, extra = {}) => ({label, data: pts(arr), borderColor: color, backgroundColor: color,
+  borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, pointHoverBorderWidth: 2, pointHoverBorderColor: C.surface, tension: .25, spanGaps: false, ...extra});
+
+function eventBands(match) {
+  const out = [];
+  D.events.filter(match).forEach(e => {
+    if (e.window) {
+      for (let d = Math.floor(e.from / 24); d * 24 < e.to; d++) {
+        const a = Math.max(e.from, d * 24 + e.window[0]), b = Math.min(e.to, d * 24 + e.window[1]);
+        if (b > a) out.push({from: a, to: b});
+      }
+    } else out.push({from: e.from, to: e.to});
+  });
+  return out;
+}
+
+/* ================================ MAP ================================ */
+let map, tiles, netLayer, linkLayer, labelLayer, markers = {}, pipes = [];
+const tileUrl = () => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${isDark() ? "Dark" : "Light"}_Gray_Base/MapServer/tile/{z}/{y}/{x}`;
+function initMap() {
+  if (typeof L === "undefined") { $("map").innerHTML = '<p class="note" style="padding:16px">Map library could not load (offline?). Everything else still works.</p>'; return; }
+  map = L.map("map", {scrollWheelZoom: false, zoomSnap: .25});
+  tiles = L.tileLayer(tileUrl(), {maxZoom: 16, attribution: 'Basemap © Esri, HERE, Garmin, © OpenStreetMap contributors'}).addTo(map);
+  netLayer = L.layerGroup().addTo(map); linkLayer = L.layerGroup(); labelLayer = L.layerGroup().addTo(map);
+  map.getContainer().addEventListener("mouseenter", () => map.scrollWheelZoom.enable());
+  map.getContainer().addEventListener("mouseleave", () => map.scrollWheelZoom.disable());
+}
+function drawNetwork() {
+  if (!map) return;
+  netLayer.clearLayers(); linkLayer.clearLayers(); labelLayer.clearLayers(); markers = {}; pipes = [];
+  D.nodes.forEach(n => L.polyline([[D.gateway.lat, D.gateway.lon], [n.lat, n.lon]], {weight: 1.2, dashArray: "2 6", opacity: .7, color: C.muted, interactive: false}).addTo(linkLayer));
+  D.nodes.filter(n => n.parent).forEach(n => {
+    const p = nodeById[n.parent], trunk = p.kind === "source";
+    const casing = L.polyline([[p.lat, p.lon], [n.lat, n.lon]], {weight: trunk ? 11 : 8, color: C.surface, opacity: .9, interactive: false}).addTo(netLayer);
+    const line = L.polyline([[p.lat, p.lon], [n.lat, n.lon]], {weight: trunk ? 6 : 4, opacity: 1, lineCap: "round"}).addTo(netLayer);
+    line.bindTooltip("", {sticky: true});
+    line.on("click", () => selectGroup("G-" + n.parent));
+    pipes.push({line, casing, group: "G-" + n.parent});
+  });
+  const gwIcon = L.divIcon({className: "", iconSize: [28, 28], iconAnchor: [14, 14],
+    html: `<div class="mk"><svg width="28" height="28" viewBox="0 0 28 28"><rect x="3" y="3" width="22" height="22" rx="6" fill="${C.text}" stroke="${C.surface}" stroke-width="2"/><path d="M9.5 15.5a6 6 0 0 1 9 0M7 12a9.5 9.5 0 0 1 14 0" stroke="${C.surface}" fill="none" stroke-width="1.7" stroke-linecap="round"/><circle cx="14" cy="18.5" r="1.6" fill="${C.surface}"/></svg></div>`});
+  L.marker([D.gateway.lat, D.gateway.lon], {icon: gwIcon, zIndexOffset: 500}).addTo(netLayer)
+    .bindTooltip(`<b>${esc(D.gateway.name)}</b><br>Backhaul: ${esc(D.gateway.backhaul)}`, {direction: "top", offset: [0, -14]});
+  D.nodes.forEach(n => {
+    const m = L.marker([n.lat, n.lon], {zIndexOffset: 1000}).addTo(netLayer);
+    m.on("click", () => selectNode(n.id, true));
+    m.bindTooltip("", {direction: "top", offset: [0, -14]});
+    L.tooltip({permanent: true, direction: "right", offset: [12, 0], className: "nodelabel"}).setContent(n.id).setLatLng([n.lat, n.lon]).addTo(labelLayer);
+    markers[n.id] = m;
+  });
+  map.fitBounds(D.nodes.map(n => [n.lat, n.lon]).concat([[D.gateway.lat, D.gateway.lon]]), {padding: [44, 44]});
+  $("maplegend").innerHTML = Object.entries(STATUS).map(([k, s]) => `<span class="sw">${shape(k, 16)}${s.label}</span>`).join("") +
+    `<span class="sw"><svg width="26" height="8"><line x1="1" x2="25" y1="4" y2="4" stroke="${C.pipe}" stroke-width="4" stroke-linecap="round"/></svg>Pipe balanced</span>
+     <span class="sw"><svg width="26" height="8"><line x1="1" x2="25" y1="4" y2="4" stroke="${C.warning}" stroke-width="4" stroke-dasharray="6 4"/></svg>Loss / theft</span>
+     <span class="sw"><svg width="26" height="8"><line x1="1" x2="25" y1="4" y2="4" stroke="${C.critical}" stroke-width="4" stroke-linecap="round"/></svg>Leak</span>
+     <label><input type="checkbox" id="showlinks"> LoRa links</label><label><input type="checkbox" id="showlabels" checked> Labels</label>`;
+  $("showlinks").onchange = e => e.target.checked ? linkLayer.addTo(map) : linkLayer.remove();
+  $("showlabels").onchange = e => e.target.checked ? labelLayer.addTo(map) : labelLayer.remove();
+}
+function updateMap() {
+  if (!map) return;
+  pipes.forEach(p => {
+    const g = groupById[p.group], s = g ? g.state[cur] : -1;
+    const color = s === 3 ? C.critical : s >= 1 ? C.warning : C.pipe;
+    p.line.setStyle({color, dashArray: (s === 1 || s === 2) ? "9 7" : null});
+    const lbl = ["balanced", "water loss", "suspected theft", "leak confirmed"][Math.max(0, s)] || "no data";
+    p.line.setTooltipContent(`<b>${esc(g.name)}</b><br>Loss ratio ${fmt(g.ratio[cur], 1)}% (baseline ${g.mu}%)<br>State: <b>${lbl}</b><br><span style="opacity:.7">click for water balance</span>`);
+  });
+  D.nodes.forEach(n => {
+    const s = D.series[n.id], st = s.status[cur], big = n.kind !== "tap" ? 30 : 24;
+    markers[n.id].setIcon(L.divIcon({className: "", iconSize: [big, big], iconAnchor: [big / 2, big / 2],
+      html: `<div class="mk ${st} ${sel === n.id ? "sel" : ""}">${shape(st, big)}</div>`}));
+    markers[n.id].setTooltipContent(`<b>${esc(n.id)} · ${esc(n.name)}</b><br>${shape(st, 12)} ${STATUS[st].label} · risk ${fmt(s.mri[cur], 0)}/100<br>` +
+      `Cl ${fmt(s.cl[cur])} mg/L · turbidity ${fmt(s.turb[cur], 1)} NTU<br>TDS ${fmt(s.tds[cur], 0)} · pH ${fmt(s.ph[cur])} · flow ${fmt(s.flow[cur], 1)} L/min`);
+  });
+}
+
+/* ================================ RAIL + KPIs ================================ */
+function drawRail() {
+  const n = H.length - 1;
+  $("rail").innerHTML = D.events.map(e => `<div class="gt" style="left:${e.from / n * 100}%;width:${Math.max(.3, (e.to - e.from) / n * 100)}%" title="${esc(e.id)}: ${esc(e.description)}"></div>`).join("") +
+    D.alerts.filter(a => a.severity !== "info").map(a => `<span class="tk" data-h="${a.h}" style="left:${clamp(a.h / n * 100, 0, 100)}%" title="${esc(a.time.slice(5))} ${esc(a.title)} — ${esc(a.location_name)}">${shape(SEV[a.severity].st, 11)}</span>`).join("");
+  $("rail").querySelectorAll(".tk").forEach(t => t.onclick = () => { const a = D.alerts.find(x => x.h === +t.dataset.h); focusAlert(a); });
+}
+function updateKpis() {
+  const counts = {green: 0, amber: 0, red: 0, offline: 0};
+  D.nodes.forEach(n => counts[D.series[n.id].status[cur]]++);
+  const openA = D.alerts.filter(a => a.h <= cur + 1 && (a.rh == null || a.rh > cur + 1));
+  const ev = D.evaluation, he = D.health.events || [];
+  const averted = he.reduce((s, e) => s + (e.cases_averted || 0), 0), N = D.nodes.length;
+  const bar = Object.entries(counts).filter(([, v]) => v).map(([k, v]) => `<i style="width:${v / N * 100}%;background:${C[STATUS[k].c]}"></i>`).join("");
+  const tiles = [
+    ["status", "Network now", `${counts.green}<small style="font-size:13px;color:var(--muted)">/${N} safe</small>`, `<div class="bar">${bar}</div>${counts.amber} watch · ${counts.red} unsafe · ${counts.offline} offline`],
+    ["alerts", "Open alerts", openA.length, `${openA.filter(a => a.severity === "critical").length} critical · ${acked.size} acknowledged`],
+    ["eval", "Events detected", `${ev.events_detected}/${ev.events_total}`, `alert precision ${(ev.precision * 100).toFixed(0)}%`],
+    ["eval", "Median latency", ev.median_latency_min != null ? `${ev.median_latency_min}<small style="font-size:13px"> min</small>` : "–", "event start → first alert"],
+    ["balance", "Water lost", `${D.groups.reduce((s, g) => s + g.lost_kl, 0).toFixed(0)}<small style="font-size:13px"> kL</small>`, "during detected incidents"],
+    ["health", "Cases averted", he.length ? averted.toFixed(0) : "–", he.length ? "illustrative, vs status quo" : "no health model here"],
+  ];
+  $("kpis").innerHTML = tiles.map(([k, l, v, s]) => `<button class="kpi" data-k="${k}"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></button>`).join("");
+  $("kpis").querySelectorAll(".kpi").forEach(b => b.onclick = () => {
+    const k = b.dataset.k;
+    if (k === "alerts") { sevFilter = "all"; showRes = false; $("showres").checked = false; updateFeed(true); $("feed").scrollIntoView({behavior: "smooth", block: "center"}); }
+    else if (k === "status") $("mxwrap").scrollIntoView({behavior: "smooth", block: "center"});
+    else { showTab(k); $("tabs").scrollIntoView({behavior: "smooth"}); }
+  });
+}
+
+/* ================================ ALERT FEED ================================ */
+let feedKey = "", seenIds = new Set();
+function updateFeed(force) {
+  const vis = D.alerts.filter(a => a.h <= cur + 1);
+  const closed = vis.filter(a => a.rh != null && a.rh <= cur + 1).length;
+  const key = [vis.length, closed, sevFilter, search, lang, showRes, acked.size].join("|");
+  if (key === feedKey && !force) return; feedKey = key;
+  const cnt = s => vis.filter(a => s === "all" || a.severity === s).length;
+  $("chips").innerHTML = ["all", "critical", "warning", "maintenance"].map(s =>
+    `<button class="chip ${sevFilter === s ? "on" : ""}" data-s="${s}">${s === "all" ? "All" : shape(SEV[s].st, 12) + SEV[s].label} <b>${cnt(s)}</b></button>`).join("");
+  $("chips").querySelectorAll(".chip[data-s]").forEach(c => c.onclick = () => { sevFilter = c.dataset.s; updateFeed(true); });
+  const q = search.toLowerCase();
+  const list = vis.filter(a => (sevFilter === "all" || a.severity === sevFilter) &&
+      (showRes || !(a.rh != null && a.rh <= cur + 1)) &&
+      (!q || [a.title, a.message, a.location_name, a.type, a.village].join(" ").toLowerCase().includes(q))).reverse();
+  $("feedcount").textContent = `${vis.length} of ${D.alerts.length} raised by ${fmtTime(cur)}`;
+  if (!list.length) { $("feed").innerHTML = `<p class="note">${vis.length ? "No alerts match the filter." : "No alerts yet — press ▶ Play, drag the timeline, or pick an event from “Jump to”."}</p>`; return; }
+  $("feed").innerHTML = list.map(a => {
+    const res = a.rh != null && a.rh <= cur + 1, ack = acked.has(a.id), fresh = !seenIds.has(a.id) && cur + 1 - a.h < 2;
+    return `<div class="al ${a.severity} ${res ? "resolved" : ""} ${ack ? "acked" : ""} ${fresh ? "new" : ""}" data-id="${a.id}">
+      <div class="top">${sevBadge(a.severity)}<span>${esc(a.time.slice(5))}</span><span class="tag">${esc(a.type)}</span>${res ? '<span class="tag">resolved</span>' : ""}</div>
+      <div class="t">${esc(a.title)} — ${esc(a.location_name)}</div>
+      ${lang !== "te" ? `<div class="m">${esc(a.message)}</div>` : ""}
+      ${lang !== "en" ? `<div class="te" lang="te">${esc(a.message_te)}</div>` : ""}
+      <div class="foot"><span>→ ${a.recipients.length} recipient(s)</span><span class="sp"></span>
+        <button class="ack" data-id="${a.id}">${ack ? "✓ Acknowledged" : "Acknowledge"}</button></div></div>`;
+  }).join("");
+  vis.forEach(a => seenIds.add(a.id));
+  $("feed").querySelectorAll(".al").forEach(d => d.onclick = e => {
+    if (e.target.classList.contains("ack")) { const id = e.target.dataset.id; acked.has(id) ? acked.delete(id) : acked.add(id); updateFeed(true); updateKpis(); return; }
+    focusAlert(D.alerts.find(a => a.id === d.dataset.id));
+  });
+}
+function focusAlert(a) {
+  if (!a) return; stop();
+  if (nodeById[a.location]) selectNode(a.location); else if (groupById[a.location]) selectGroup(a.location, false);
+  setTime(Math.ceil(a.h));
+  if (map && nodeById[a.location]) map.panTo([nodeById[a.location].lat, nodeById[a.location].lon]);
+}
+
+/* ================================ STATUS MATRIX ================================ */
+let mxRows = [], mxGeo = {}, mxBase = null, mxHover = null;
+function drawMatrixBase() {
+  const cv = $("matrix"), w = $("mxwrap").clientWidth, dpr = window.devicePixelRatio || 1;
+  mxRows = [...D.nodes.map(n => ({kind: "node", id: n.id, label: `${n.id}  ${n.name}`})), {kind: "sep"},
+            ...D.groups.map(g => ({kind: "group", id: g.id, label: g.name.replace("Village distribution: ", "Pipes · ").replace("Trunk main: ", "Trunk · ").replace("Supply line: ", "Supply · ")}))];
+  const rowH = 17, labelW = w < 640 ? 64 : 250, top = 18, hgt = top + mxRows.reduce((s, r) => s + (r.kind === "sep" ? 10 : rowH), 0) + 4;
+  cv.width = w * dpr; cv.height = hgt * dpr; cv.style.height = hgt + "px";
+  const cw = (w - labelW - 6) / H.length;
+  mxGeo = {rowH, labelW, top, cw, w, hgt};
+  const off = document.createElement("canvas"); off.width = cv.width; off.height = cv.height;
+  const c = off.getContext("2d"); c.scale(dpr, dpr);
+  c.font = "11px Segoe UI, system-ui"; c.textBaseline = "middle";
+  for (let d = 0; d * 24 < H.length; d++) { c.fillStyle = C.muted; c.textAlign = "left"; if (cw * 24 > 30 || d % 2 === 0) c.fillText(fmtDay(d * 24), labelW + d * 24 * cw + 2, 8); }
+  let y = top;
+  const gcol = s => s === 3 ? C.critical : s >= 1 ? C.warning : s === 0 ? C["pipe-ok"] : C["surface-3"];
+  mxRows.forEach(r => {
+    r.y = y;
+    if (r.kind === "sep") { y += 10; return; }
+    c.fillStyle = C["text-2"]; c.textAlign = "left";
+    let lab = r.label; const maxW = labelW - 10;
+    while (c.measureText(lab).width > maxW && lab.length > 4) lab = lab.slice(0, -2);
+    c.fillText(lab === r.label ? lab : lab + "…", 0, y + rowH / 2);
+    for (let i = 0; i < H.length; i++) {
+      c.fillStyle = r.kind === "node" ? C[STATUS[D.series[r.id].status[i]].c] : gcol(groupById[r.id].state[i]);
+      c.fillRect(labelW + i * cw, y + 2, Math.ceil(cw + .5), rowH - 4);
+    }
+    y += rowH;
+  });
+  c.strokeStyle = C.surface; c.lineWidth = 1.5;
+  for (let d = 1; d * 24 < H.length; d++) { const x = labelW + d * 24 * cw; c.beginPath(); c.moveTo(x, top); c.lineTo(x, y); c.stroke(); }
+  const tw = D.meta.train_days * 24 * cw;
+  c.fillStyle = hexA(C.surface.length === 7 ? C.surface : "#ffffff", .55); c.fillRect(labelW, top, tw, y - top);
+  c.fillStyle = C["text-2"]; c.textAlign = "center"; c.font = "600 10.5px Segoe UI, system-ui";
+  c.fillText("AI commissioning (learning baseline)", labelW + tw / 2, top + (y - top) / 2);
+  mxBase = off; drawMatrix();
+  $("mxlegend").innerHTML = Object.entries(STATUS).map(([k, s]) => `<span class="sw">${shape(k, 14)}Node ${s.label.toLowerCase()}</span>`).join("") +
+    `<span class="sw"><svg width="18" height="10"><rect width="18" height="10" rx="2" fill="${C["pipe-ok"]}"/></svg>Pipe balanced</span>
+     <span class="sw"><svg width="18" height="10"><rect width="18" height="10" rx="2" fill="${C.warning}"/></svg>Pipe loss / theft</span>
+     <span class="sw"><svg width="18" height="10"><rect width="18" height="10" rx="2" fill="${C.critical}"/></svg>Pipe leak</span>`;
+}
+function drawMatrix() {
+  if (!mxBase) return;
+  const cv = $("matrix"), c = cv.getContext("2d"), dpr = window.devicePixelRatio || 1, g = mxGeo;
+  c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height); c.drawImage(mxBase, 0, 0);
+  c.scale(dpr, dpr);
+  const selRow = mxRows.find(r => r.kind === "node" && r.id === sel);
+  if (selRow) { c.strokeStyle = C.text; c.lineWidth = 1.5; c.strokeRect(g.labelW - 1, selRow.y + 1, g.w - g.labelW - 4, g.rowH - 2); }
+  if (mxHover) { c.strokeStyle = C.text; c.lineWidth = 1.5; c.strokeRect(g.labelW + mxHover.i * g.cw - 1, mxHover.r.y + 1, g.cw + 2, g.rowH - 2); }
+  const x = g.labelW + (cur + .5) * g.cw;
+  c.strokeStyle = C.text; c.lineWidth = 2; c.beginPath(); c.moveTo(x, g.top - 3); c.lineTo(x, g.hgt - 2); c.stroke();
+  c.fillStyle = C.text; c.beginPath(); c.moveTo(x - 5, g.top - 7); c.lineTo(x + 5, g.top - 7); c.lineTo(x, g.top - 1); c.fill();
+}
+function mxHit(e) {
+  const r = $("matrix").getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, g = mxGeo;
+  if (x < g.labelW) return null;
+  const i = clamp(Math.floor((x - g.labelW) / g.cw), 0, H.length - 1);
+  const row = mxRows.find(rw => rw.kind !== "sep" && y >= rw.y && y < rw.y + g.rowH);
+  return row ? {i, r: row, x, y} : null;
+}
+$("matrix").addEventListener("mousemove", e => {
+  const h = mxHit(e), tip = $("mxtip");
+  mxHover = h; drawMatrix();
+  if (!h) { tip.style.display = "none"; return; }
+  let html;
+  if (h.r.kind === "node") { const s = D.series[h.r.id], st = s.status[h.i];
+    html = `<b>${esc(nodeById[h.r.id].name)}</b> · ${fmtTime(h.i)}<br>${shape(st, 12)} ${STATUS[st].label} · risk ${fmt(s.mri[h.i], 0)} · Cl ${fmt(s.cl[h.i])} · turb ${fmt(s.turb[h.i], 1)} · TDS ${fmt(s.tds[h.i], 0)}`; }
+  else { const g = groupById[h.r.id], st = g.state[h.i];
+    html = `<b>${esc(g.name)}</b> · ${fmtTime(h.i)}<br>Loss ${fmt(g.ratio[h.i], 1)}% (baseline ${g.mu}%) · ${["balanced", "water loss", "suspected theft", "leak"][st] || "no data"}`; }
+  tip.innerHTML = html; tip.style.display = "block";
+  const w = $("mxwrap").clientWidth, tw = tip.offsetWidth;
+  tip.style.left = clamp(h.x + 14, 0, w - tw - 4) + "px"; tip.style.top = (h.y + 16) + "px";
+});
+$("matrix").addEventListener("mouseleave", () => { mxHover = null; $("mxtip").style.display = "none"; drawMatrix(); });
+$("matrix").addEventListener("click", e => {
+  const h = mxHit(e); if (!h) return; stop();
+  if (h.r.kind === "node") selectNode(h.r.id); else selectGroup(h.r.id, false);
+  setTime(h.i);
+});
+
+/* ================================ NODE DETAIL ================================ */
+const NODE_CHARTS = [
+  {key: "cl", title: "Free chlorine (mg/L)", note: "ORP-derived estimate · dashed = ground truth", truth: true, lines: [{y: 0.2, label: "BIS min 0.2"}], yMin: 0,
+   zones: [{from: null, to: 0.2, c: "crit-a"}, {from: 0.2, to: 0.5, c: "warn-a"}, {from: 0.5, to: null, c: "good-a"}]},
+  {key: "turb", title: "Turbidity (NTU)", note: "BIS acceptable 1 · permissible 5", lines: [{y: 5, label: "5 NTU"}], yMin: 0,
+   zones: [{from: null, to: 1, c: "good-a"}, {from: 1, to: 5, c: "warn-a"}, {from: 5, to: null, c: "crit-a"}]},
+  {key: "mri", title: "Microbial risk index (0–100)", note: "low Cl × high turbidity + Isolation-Forest boost", yMin: 0, yMax: 100,
+   zones: [{from: null, to: 30, c: "good-a"}, {from: 30, to: 60, c: "warn-a"}, {from: 60, to: null, c: "crit-a"}]},
+  {key: "flow", title: "Flow (L/min)", note: "hourly mean of 15-min samples", yMin: 0},
+  {key: "tds", title: "TDS (mg/L)", note: "BIS acceptable 500 · permissible 2000", lines: [{y: 500, label: "500"}], yMin: 0,
+   zones: [{from: null, to: 500, c: "good-a"}, {from: 500, to: 2000, c: "warn-a"}, {from: 2000, to: null, c: "crit-a"}]},
+  {key: "ph", title: "pH", note: "BIS range 6.5–8.5",
+   zones: [{from: null, to: 6.5, c: "crit-a"}, {from: 6.5, to: 8.5, c: "good-a"}, {from: 8.5, to: null, c: "crit-a"}]},
+];
+let nodeCharts = [];
+function buildNodeCharts() {
+  $("nodecharts").innerHTML = NODE_CHARTS.map((c, i) =>
+    `<div class="ch"><div class="ct">${c.title}</div><div class="cn">${c.note || ""}</div><div class="box"><canvas id="nc${i}"></canvas></div></div>`).join("");
+  nodeCharts.forEach(c => c.destroy()); nodeCharts = [];
+  NODE_CHARTS.forEach((c, i) => {
+    const ch = new Chart($("nc" + i), {type: "line", data: {datasets: []}, options: baseOpts({yMin: c.yMin, yMax: c.yMax, sync: true})});
+    ch.canvas.addEventListener("mouseleave", () => { hoverIdx = null; nodeCharts.forEach(x => x.draw()); });
+    nodeCharts.push(ch);
+  });
+  const opts = D.nodes.map(n => `<option value="${n.id}">${n.id} · ${esc(n.name)}</option>`).join("");
+  $("nodesel").innerHTML = opts;
+  $("cmpsel").innerHTML = `<option value="">Compare with…</option>` + opts;
+}
+function selectNode(id, pan) {
+  sel = id; const n = nodeById[id], s = D.series[id], c2 = cmp && cmp !== id ? D.series[cmp] : null;
+  $("nodesel").value = id; $("cmpsel").value = c2 ? cmp : "";
+  $("dtitle").textContent = `${n.id} · ${n.name}`;
+  $("dsub").textContent = `${n.village} · ${n.kind}${n.population ? ` · serves ${n.population.toLocaleString()} people` : ""} · meter: ${n.meter}`;
+  const bands = eventBands(e => e.locations.includes(id) || e.type === "chlorination_failure");
+  NODE_CHARTS.forEach((c, i) => {
+    const ch = nodeCharts[i];
+    const ds = [lineDs(c2 ? `${id}` : (c.truth ? "Measured" : c.title), s[c.key], C["series-1"], c2 ? {} : {fill: "origin", backgroundColor: areaFill(C["series-1"])})];
+    if (c2) ds.push(lineDs(cmp, c2[c.key], C["series-2"]));
+    else if (c.truth) ds.push(lineDs("Ground truth", s.cl_true, C["series-2"], {borderWidth: 1.4, borderDash: [5, 3], fill: false}));
+    ch.data.datasets = ds;
+    Object.assign(ch.options.plugins.jn, {bands, lines: c.lines || [], zones: c.zones || [], cursor: cur});
+    ch.options.plugins.legend.display = ds.length > 1;
+    ch.update("none");
+  });
+  updateDetailHead(); updateMap(); drawMatrix();
+  if (pan && map) map.panTo([n.lat, n.lon]);
+}
+function chip(label, v, unit, d, lvl, gauge) {
+  const col = lvl === 2 ? C.critical : lvl === 1 ? C.warning : C.good;
+  const icon = lvl === 2 ? shape("red", 12) : lvl === 1 ? shape("amber", 12) : "";
+  return `<div class="val"><div class="l">${icon}${label}</div><div class="v">${fmt(v, d)} <small>${unit}</small></div>
+    ${gauge != null ? `<div class="g"><i style="width:${clamp(gauge, 0, 1) * 100}%;background:${col}"></i></div>` : ""}</div>`;
+}
+function updateDetailHead() {
+  if (!sel) return;
+  const s = D.series[sel], i = cur, st = s.status[i];
+  $("dpill").innerHTML = pill(st);
+  const cl = s.cl[i], tu = s.turb[i], mri = s.mri[i], tds = s.tds[i], ph = s.ph[i], b = s.batt[i];
+  const bp = b == null ? null : clamp((b - 3300) / 900, 0, 1) * 100;
+  $("vals").innerHTML =
+    chip("Free chlorine", cl, "mg/L", 2, cl == null ? 0 : cl < .2 ? 2 : cl < .5 ? 1 : 0, cl == null ? null : cl / 1.5) +
+    chip("Turbidity", tu, "NTU", 1, tu == null ? 0 : tu > 5 ? 2 : tu > 1 ? 1 : 0, tu == null ? null : tu / 10) +
+    chip("Risk index", mri, "/100", 0, mri == null ? 0 : mri >= 60 ? 2 : mri >= 30 ? 1 : 0, mri == null ? null : mri / 100) +
+    chip("TDS", tds, "mg/L", 0, tds == null ? 0 : tds > 2000 ? 2 : tds > 500 ? 1 : 0, tds == null ? null : tds / 1200) +
+    chip("pH", ph, "", 2, ph == null ? 0 : (ph < 6.5 || ph > 8.5) ? 2 : 0, ph == null ? null : ph / 14) +
+    chip("Flow", s.flow[i], "L/min", 1, 0, null) +
+    chip("Battery", bp, "%", 0, bp != null && bp < 20 ? 1 : 0, bp == null ? null : bp / 100);
+}
+$("nodesel").onchange = e => selectNode(e.target.value, true);
+$("cmpsel").onchange = e => { cmp = e.target.value; selectNode(sel); };
+
+/* ================================ TABS ================================ */
+const TABS = [["balance", "💧 Water balance & theft"], ["equity", "⚖ Equity"], ["health", "✚ Public health"],
+              ["eval", "✓ AI evaluation"], ["net", "📡 Network & hardware"], ["msg", "✉ Messages"]];
+function showTab(k) {
+  document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.k === k));
+  document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === "p-" + k));
+  tabCharts.forEach(c => c.resize());
+}
+$("tabs").innerHTML = TABS.map(([k, l]) => `<button role="tab" data-k="${k}">${l}</button>`).join("");
+document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => showTab(b.dataset.k));
+function selectGroup(gid, scroll = true) {
+  const g = groupById[gid]; if (!g) return;
+  showTab("balance");
+  document.querySelectorAll(".gb").forEach(e => e.classList.toggle("hl", e.dataset.g === gid));
+  selectNode(g.parent);
+  if (scroll) document.querySelector(`.gb[data-g="${gid}"]`)?.scrollIntoView({behavior: "smooth", block: "center"});
+}
+
+let tabCharts = [];
+function buildTabs() {
+  tabCharts.forEach(c => c.destroy()); tabCharts = [];
+  /* ----- water balance ----- */
+  const inc = D.alerts.filter(a => ["WATER_LOSS", "LEAK_CONFIRMED", "THEFT_SUSPECTED"].includes(a.type));
+  $("p-balance").innerHTML = `<div class="card"><h2>Loss ratio per pipe segment <small>(inflow − Σ outflows) / inflow · dashed = learned baseline · click a chart to jump</small></h2>
+    <div class="charts">${D.groups.map((g, i) => `<div class="ch gb" data-g="${g.id}"><div class="ct">${esc(g.name)}</div>
+      <div class="cn">${esc(g.parent)} → ${esc(g.children.join(", "))} · lost in incidents: <b>${g.lost_kl} kL</b></div>
+      <div class="box"><canvas id="gb${i}"></canvas></div></div>`).join("")}</div>
+    <p class="note">CUSUM on every 15-min sample. Loss that persists through 00:00–05:00 (minimum night flow) ⇒ physical leak. Loss that recurs at the same evening hour with a clean night ⇒ unauthorised draw.</p></div>
+    <div class="card" style="margin-top:12px"><h2>Water-loss incidents <small>${inc.length} alerts · click a row to jump</small></h2><div class="tblwrap"><table><thead><tr>
+      <th>Time</th><th>Type</th><th>Segment</th><th class="n">Excess L/min</th><th class="n">≈ kL/day</th><th>Status</th></tr></thead><tbody>
+      ${inc.map(a => `<tr class="click" data-id="${a.id}"><td>${esc(a.time.slice(5))}</td><td>${sevBadge(a.severity)} ${esc(a.type)}</td><td>${esc(a.location_name)}</td>
+        <td class="n">${fmt(a.details.excess, 0)}</td><td class="n">${fmt(a.details.kld, 0)}</td><td>${esc(a.status)}</td></tr>`).join("") || `<tr><td colspan="6" class="note">No water-loss incidents in this run.</td></tr>`}
+      </tbody></table></div></div>`;
+  $("p-balance").querySelectorAll("tr.click").forEach(r => r.onclick = () => focusAlert(D.alerts.find(a => a.id === r.dataset.id)));
+  D.groups.forEach((g, i) => {
+    const o = baseOpts({yTitle: "%"});
+    Object.assign(o.plugins.jn, {bands: eventBands(e => e.target === g.id), lines: [{y: g.mu, label: `baseline ${g.mu}%`}]});
+    tabCharts.push(new Chart($("gb" + i), {type: "line", data: {datasets: [lineDs("Loss ratio %", g.ratio, C["series-1"], {fill: "origin", backgroundColor: areaFill(C["series-1"])})]}, options: o}));
+  });
+
+  /* ----- equity ----- */
+  const es = D.equity.summary;
+  if (!es.length) $("p-equity").innerHTML = `<div class="card"><p class="note">Equity analysis needs residential habitations; the school pilot has none.</p></div>`;
+  else {
+    const days = [...new Set(D.equity.rows.filter(r => r.equity).map(r => r.date))];
+    const minP = Math.min(...es.map(e => e.pct)), sorted = es.map(e => e.lpcd).sort((a, b) => a - b), medL = sorted[Math.floor(sorted.length / 2)];
+    const idx = (Math.min(...sorted) / Math.max(...sorted));
+    const cell = p => p < 70 ? `background:${C["crit-a"]};color:${C.critical};font-weight:650` : p < 90 ? `background:${C["warn-a"]}` : "";
+    $("p-equity").innerHTML = `<div class="kpis">
+        <div class="kpi"><div class="l">Equity index (worst ÷ best)</div><div class="v">${idx.toFixed(2)}</div><div class="s">1.00 = everyone gets the same</div></div>
+        <div class="kpi"><div class="l">Worst-served habitation</div><div class="v">${minP.toFixed(0)}%</div><div class="s">of the 100 LPCD target</div></div>
+        <div class="kpi"><div class="l">Median supply</div><div class="v">${medL}<small style="font-size:13px"> LPCD</small></div><div class="s">across habitations</div></div></div>
+      <div class="grid2"><div class="card"><h2>Average litres per person per day <small>target 100 (Mission Bhagiratha rural) · alert below 70</small></h2>
+      <div style="position:relative;height:300px"><canvas id="eqc"></canvas></div></div>
+      <div class="card"><h2>Daily LPCD by habitation</h2><div class="tblwrap"><table><thead><tr><th>Habitation</th>${days.map(d => `<th class="n">${d.slice(8)}</th>`).join("")}</tr></thead><tbody>
+      ${es.map(e => `<tr class="click" data-n="${e.node}"><td>${esc(e.name)}</td>${days.map(d => { const r = D.equity.rows.find(x => x.node === e.node && x.date === d);
+        return `<td class="n" style="${r ? cell(r.pct) : ""}">${r ? r.lpcd.toFixed(0) : "–"}</td>`; }).join("")}</tr>`).join("")}
+      </tbody></table></div><p class="note">Day of month in the header. Red &lt; 70% of target, amber &lt; 90%. Click a row to inspect that tap.</p></div></div>`;
+    $("p-equity").querySelectorAll("tr.click").forEach(r => r.onclick = () => selectNode(r.dataset.n, true));
+    const o = baseOpts({xTime: false, yMin: 0, yTitle: "LPCD"});
+    o.plugins.jn.lines = [{y: 100, label: "target 100"}, {y: 70, label: "alert < 70"}];
+    o.plugins.tooltip.callbacks = {label: c => ` ${c.parsed.y} LPCD (${es[c.dataIndex].pct}% of target)`};
+    tabCharts.push(new Chart($("eqc"), {type: "bar", data: {labels: es.map(e => e.name.replace(/ \(.*\)/, "").replace(" habitation", "")),
+      datasets: [{label: "Average LPCD", data: es.map(e => e.lpcd), backgroundColor: es.map(e => e.pct < 70 ? C.critical : C["series-1"]),
+                  borderRadius: {topLeft: 5, topRight: 5}, borderSkipped: "bottom", maxBarThickness: 48}]}, options: o}));
+  }
+
+  /* ----- health ----- */
+  const he = D.health.events || [];
+  if (!he.length) $("p-health").innerHTML = `<div class="card"><p class="note">No health-linked events in this run (bench tests and some lab set-ups use no attack rate).</p></div>`;
+  else {
+    const byDay = {};
+    D.health.daily.forEach(r => { byDay[r.date] ??= {sq: 0, jn: 0}; byDay[r.date].sq += r.cases_status_quo; byDay[r.date].jn += r.cases_jalnetra; });
+    const dl = Object.keys(byDay);
+    $("p-health").innerHTML = `<div class="grid2"><div class="card"><h2>Simulated diarrhoeal cases (ASHA reports) <small>all villages, per day</small></h2>
+      <div style="position:relative;height:310px"><canvas id="hc"></canvas></div>
+      <p class="note">Illustrative mechanism model: attack rate × exposed population × exposure time, log-normal incubation (median 30 h). Status quo = contamination continues until a case cluster is noticed, then ~24 h to respond. JalNetra = boil-water advisory 2 h after the alert (−70% exposure).</p></div>
+      <div class="card"><h2>Early-warning lead time</h2>${he.map(e => `
+        <div style="border-bottom:1px solid var(--border);padding:8px 0"><div style="font-weight:650">${esc(e.event)} · ${esc(e.description)}</div>
+        <table><tbody>
+          <tr><td>Exposed population</td><td class="n">${e.exposed_population.toLocaleString()}</td></tr>
+          <tr><td>JalNetra alert</td><td class="n">${esc(e.alert_time || "not detected")}</td></tr>
+          <tr><td>First symptomatic case expected</td><td class="n">${esc(e.first_case_expected)}</td></tr>
+          <tr><td>Status-quo detection (case cluster)</td><td class="n">${esc(e.status_quo_detection)}</td></tr>
+          <tr><td><b>Lead time gained</b></td><td class="n"><b>${e.lead_time_h ?? "–"} h</b></td></tr>
+          <tr><td>Cases: status quo → JalNetra</td><td class="n">${e.cases_status_quo} → ${e.cases_jalnetra} (<b>−${e.cases_averted}</b>)</td></tr>
+        </tbody></table></div>`).join("")}</div></div>`;
+    const o = baseOpts({xTime: false, yMin: 0, legend: true, yTitle: "cases / day"});
+    const bar = (label, data, color) => ({label, data, backgroundColor: color, borderRadius: {topLeft: 4, topRight: 4}, borderSkipped: "bottom", borderColor: C.surface, borderWidth: {left: 1, right: 1}});
+    tabCharts.push(new Chart($("hc"), {type: "bar", data: {labels: dl.map(d => d.slice(5)),
+      datasets: [bar("Without JalNetra (status quo)", dl.map(d => byDay[d].sq), C["series-2"]), bar("With JalNetra", dl.map(d => byDay[d].jn), C["series-1"])]}, options: o}));
+  }
+
+  /* ----- evaluation ----- */
+  const ev = D.evaluation;
+  const tile = (l, v, s) => `<div class="kpi" style="cursor:default"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+  $("p-eval").innerHTML = `<div class="kpis">
+      ${tile("Event recall", `${(ev.recall * 100).toFixed(0)}%`, `${ev.events_detected} of ${ev.events_total} injected events`)}
+      ${tile("Alert precision", `${(ev.precision * 100).toFixed(0)}%`, `${ev.false_alerts} false of ${ev.alerts_total} actionable`)}
+      ${tile("Leak vs theft", ev.classification_accuracy != null ? `${(ev.classification_accuracy * 100).toFixed(0)}%` : "–", "classification accuracy")}
+      ${tile("Median latency", ev.median_latency_min != null ? `${ev.median_latency_min} min` : "–", "event start → first alert")}
+      ${tile("Alert storm avoided", D.engine.linked_suppressed, "low-Cl alerts linked to a root cause")}
+      ${tile("ML layer", D.engine.ml_enabled ? "Isolation Forest" : "rules only", "trained on commissioning days")}</div>
+    <div class="card"><h2>Ground-truth events vs detections <small>click a row to replay it</small></h2><div class="tblwrap"><table><thead><tr>
+      <th>Event</th><th>What happened (injected)</th><th>Where</th><th>Start</th><th>Detected</th><th>First alert</th><th class="n">Latency</th><th>Classification</th><th class="n">Alerts</th></tr></thead><tbody>
+      ${ev.events.map((r, i) => `<tr class="click" data-i="${i}"><td>${r.event}</td><td>${esc(r.description)}</td><td>${esc(r.target_name)}</td><td>${r.start.slice(5)}</td>
+        <td class="${r.detected ? "ok" : "no"}">${r.detected ? "✓ yes" : "✗ missed"}</td><td>${r.first_alert ? r.first_alert.slice(5) : "–"}</td>
+        <td class="n">${r.latency_min != null ? (r.latency_min >= 120 ? (r.latency_min / 60).toFixed(1) + " h" : r.latency_min + " min") : "–"}</td>
+        <td>${r.classification ? `<span class="${r.classification.correct ? "ok" : "no"}">${r.classification.correct ? "✓" : "✗"} ${r.classification.expected}</span>${r.classification.latency_h != null ? ` after ${r.classification.latency_h} h` : ""}` : "–"}</td>
+        <td class="n">${r.n_alerts}</td></tr>`).join("") || `<tr><td colspan="9" class="note">No events injected — open the Scenario Lab to add some.</td></tr>`}</tbody></table></div>
+      <p class="note">Each problem is injected with a known start, end and location, so detection is scored objectively. Latency includes radio delivery, gateway outages and processing. Equity is checked once a day.</p>
+      ${ev.false_alert_list.length ? `<h2 style="margin-top:12px">False alerts</h2>${ev.false_alert_list.map(a => `<div class="msg">${esc(a.time)} ${esc(a.type)} — ${esc(a.message)}</div>`).join("")}` : ""}</div>`;
+  $("p-eval").querySelectorAll("tr.click").forEach(r => r.onclick = () => jumpEvent(ev.events[+r.dataset.i].event));
+
+  /* ----- network & hardware ----- */
+  const tot = D.bom.reduce((s, b) => s + b.inr, 0), p = D.payload;
+  $("p-net").innerHTML = `<div class="grid2">
+    <div class="card"><h2>LoRa link budget <small>IN865 · 125 kHz · CR 4/5 · 17 B payload + 13 B LoRaWAN header</small></h2><div class="tblwrap"><table><thead><tr>
+      <th>Node</th><th class="n">km</th><th class="n">SF</th><th>Antenna</th><th class="n">RSSI</th><th class="n">SNR</th><th class="n">Airtime ms</th><th class="n">Delivery</th></tr></thead><tbody>
+      ${D.radio.map(r => `<tr class="click" data-n="${r.node}"><td>${r.node}</td><td class="n">${r.distance_km}</td><td class="n">${r.sf}${r.nb_trans > 1 ? " ×2" : ""}</td><td>${esc(r.antenna)}</td><td class="n">${r.rssi_dbm}</td><td class="n">${r.snr_db}</td><td class="n">${r.airtime_ms}</td>
+        <td class="n" style="${r.pdr < .97 ? `color:${C.critical};font-weight:650` : ""}">${(r.pdr * 100).toFixed(1)}%</td></tr>`).join("")}
+      </tbody></table></div><p class="note">SF picked like LoRaWAN ADR (lowest SF with ≥ 8 dB margin). Weak sites get a Yagi and frame repetition.</p></div>
+    <div class="card"><h2>Solar power budget</h2><div class="tblwrap"><table><thead><tr><th>Node</th><th class="n">Avg current</th><th class="n">Use mAh/d</th><th class="n">Harvest mAh/d</th><th class="n">Min battery</th><th class="n">No-sun autonomy</th></tr></thead><tbody>
+      ${D.power.map(r => `<tr><td>${r.node}</td><td class="n">${r.avg_current_ma} mA</td><td class="n">${r.use_mah_day}</td><td class="n">${r.harvest_mah_day}</td><td class="n">${r.min_soc_pct}%</td><td class="n">${r.autonomy_days_no_sun} d</td></tr>`).join("")}
+      </tbody></table></div><p class="note">~35 s awake every 15 min; sensors power-gated by a MOSFET; daily monsoon cloud cover.</p></div>
+    <div class="card"><h2>Uplink payload <small>17 bytes, big-endian</small></h2><div class="hex mono">${esc(p.hex || "")}</div>
+      <div class="tblwrap"><table><tbody>${p.fields ? Object.entries(p.fields).map(([k, v]) => `<tr><td class="mono">${k}</td><td class="n mono">${v}</td></tr>`).join("") : ""}</tbody></table></div>
+      <p class="note">Identical layout in <code>firmware/jalnetra_node/jalnetra_node.ino</code> and <code>jalnetra/codec.py</code>.</p></div>
+    <div class="card"><h2>Bill of materials per tap node <small>indicative ₹</small></h2><div class="tblwrap"><table><thead><tr><th>Item</th><th>Role</th><th class="n">₹</th></tr></thead><tbody>
+      ${D.bom.map(b => `<tr><td>${esc(b.item)}</td><td>${esc(b.role)}</td><td class="n">${b.inr.toLocaleString("en-IN")}</td></tr>`).join("")}
+      <tr><td><b>Total</b></td><td></td><td class="n"><b>₹${tot.toLocaleString("en-IN")}</b></td></tr></tbody></table></div></div></div>`;
+  $("p-net").querySelectorAll("tr.click").forEach(r => r.onclick = () => selectNode(r.dataset.n, true));
+
+  /* ----- messages ----- */
+  const ob = D.outbox;
+  $("p-msg").innerHTML = `<div class="card"><h2>Dispatched messages <small>${ob.length} · SMS with Telugu uses UCS-2 (67 chars/segment)</small></h2>
+    <div class="chips"><select class="btn" id="obf"><option value="">All channels</option><option>WhatsApp</option><option>SMS</option></select>
+    <input class="search" id="obq" placeholder="Filter by recipient or text…"></div><div id="obl"></div></div>`;
+  const renderOb = () => { const f = $("obf").value, q = $("obq").value.toLowerCase();
+    $("obl").innerHTML = ob.filter(m => (!f || m.channel === f) && (!q || (m.recipient + m.text).toLowerCase().includes(q))).slice(0, 150).map(m =>
+      `<div class="msg"><div class="h">${esc(m.time)} · ${m.channel === "SMS" ? "✉ SMS" : "💬 WhatsApp"} → ${esc(m.recipient)} · ${esc(m.status)}${m.channel === "SMS" ? ` · ${m.segments} segment(s)` : ""}</div><span lang="te">${esc(m.text)}</span></div>`).join("") || '<p class="note">No messages match.</p>'; };
+  $("obf").onchange = renderOb; $("obq").oninput = renderOb; renderOb();
+}
+
+/* ================================ TIME ================================ */
+function setTime(h) {
+  cur = clamp(h | 0, 0, H.length - 1);
+  $("slider").value = cur;
+  const d = hourDate(cur), train = cur < D.meta.train_days * 24;
+  $("clock").innerHTML = `${DOW[d.getDay()]} ${fmtTime(cur)}<small>${train ? "AI commissioning · learning baseline" : `day ${Math.floor(cur / 24) + 1} of ${D.meta.days}`}</small>`;
+  updateMap(); updateKpis(); updateFeed(); updateDetailHead(); drawMatrix();
+  [...nodeCharts, ...tabCharts].forEach(c => { if (c.options.plugins.jn && c.options.plugins.jn.cursor != null) { c.options.plugins.jn.cursor = cur; c.draw(); } });
+}
+$("slider").addEventListener("input", () => setTime(+$("slider").value));
+$("back").onclick = () => setTime(cur - 1);
+$("fwd").onclick = () => setTime(cur + 1);
+function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Play"; }
+function play() {
+  if (timer) return stop();
+  if (cur >= H.length - 1) setTime(0);
+  $("play").textContent = "❚❚ Pause";
+  timer = setInterval(() => { if (cur >= H.length - 1) return stop(); setTime(cur + 1); }, +$("speed").value);
+}
+$("play").onclick = play;
+$("speed").onchange = () => { if (timer) { stop(); play(); } };
+function fillJump() {
+  $("jump").innerHTML = `<option value="">⤳ Jump to injected event…</option>` + D.events.map(e => `<option value="${e.id}">${e.id} · ${esc(e.description)}</option>`).join("");
+}
+function jumpEvent(id) {
+  const e = D.events.find(x => x.id === id); if (!e) return; stop();
+  let h = Math.floor(e.from) + (e.window ? e.window[0] : 0);
+  const firstA = D.alerts.find(a => a.h >= e.from && e.locations.includes(a.location));
+  if (firstA) h = Math.ceil(firstA.h) + 1;
+  const loc = e.locations.find(l => nodeById[l]);
+  if (groupById[e.target]) selectGroup(e.target, false); else if (loc) selectNode(loc, true);
+  setTime(h);
+}
+$("jump").onchange = () => { if ($("jump").value) jumpEvent($("jump").value); $("jump").value = ""; };
+document.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
+  lang = b.dataset.l; document.querySelectorAll(".seg button").forEach(x => x.classList.toggle("on", x === b)); updateFeed(true); });
+$("search").oninput = e => { search = e.target.value; updateFeed(true); };
+$("showres").onchange = e => { showRes = e.target.checked; updateFeed(true); };
+document.addEventListener("keydown", e => {
+  if (["INPUT", "SELECT", "TEXTAREA"].includes(e.target.tagName)) return;
+  if (e.key === " ") { e.preventDefault(); play(); }
+  else if (e.key === "ArrowRight") { e.preventDefault(); setTime(cur + (e.shiftKey ? 24 : 1)); }
+  else if (e.key === "ArrowLeft") { e.preventDefault(); setTime(cur - (e.shiftKey ? 24 : 1)); }
+  else if (e.key.toLowerCase() === "l") openLab();
+  else if (e.key === "Escape") closeLab();
+});
+
+/* ================================ RENDER ================================ */
+function renderAll(keepTime) {
+  readTheme();
+  if (map) { tiles.setUrl(tileUrl()); }
+  drawNetwork(); buildNodeCharts(); buildTabs(); drawRail(); fillJump(); drawMatrixBase();
+  if (!keepTime) {
+    const fc = D.alerts.find(a => a.severity === "critical");
+    cur = fc ? clamp(Math.ceil(fc.h) + 1, 0, H.length - 1) : 0;
+    if (!sel) sel = fc ? (nodeById[fc.location] ? fc.location : groupById[fc.location] ? groupById[fc.location].parent : null) : null;
+  }
+  selectNode(sel || (D.nodes.find(n => n.kind === "tap") || D.nodes[0]).id);
+  updateFeed(true); setTime(cur);
+}
+$("theme").onclick = () => { document.documentElement.dataset.theme = isDark() ? "light" : "dark"; renderAll(true); };
+let rsz; window.addEventListener("resize", () => { clearTimeout(rsz); rsz = setTimeout(drawMatrixBase, 150); });
+
+/* ================================ SCENARIO LAB ================================ */
+let LAB = null, uid = 1;
+const labDate = h => { const d = hourDate(h); return `${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+function openLab() { if (!LAB) LAB = JSON.parse(JSON.stringify(D.lab)); renderLab(); $("drawer").classList.add("open"); }
+function closeLab() { $("drawer").classList.remove("open"); }
+$("labbtn").onclick = openLab; $("labclose").onclick = closeLab; $("scrim").onclick = closeLab;
+function slider(i, k, label, min, max, step, val, show) {
+  return `<label>${label}</label><input type="range" data-i="${i}" data-k="${k}" min="${min}" max="${max}" step="${step}" value="${val}"><span id="lv-${i}-${k}">${show}</span>`;
+}
+function renderLab() {
+  const L = LAB, T = L.types, maxH = L.days * 24;
+  const evs = L.events.map((e, i) => {
+    const t = T[e.type]; if (!t) return "";
+    const day = Math.floor(e.start_h / 24), hr = Math.round(e.start_h % 24);
+    const early = e.start_h < L.train_days * 24 && !["chronic_inequity"].includes(e.type);
+    let f = slider(i, "day", "Start day", 0, L.days - 1, 1, day, `day ${day + 1}`) + slider(i, "hour", "Start hour", 0, 23, 1, hr, `${String(hr).padStart(2, "0")}:00`);
+    if (t.window) {
+      const nd = Math.max(1, Math.round(e.duration_h / 24)), w = e.window || [18, 23];
+      f += slider(i, "ndays", "Days active", 1, L.days, 1, nd, `${nd} d`) + slider(i, "wstart", "Daily from", 0, 23, 1, w[0], `${w[0]}:00`) + slider(i, "wlen", "Window length", 1, 12, 1, w[1] - w[0], `${w[1] - w[0]} h`);
+    } else if (e.type !== "chronic_inequity") {
+      f += slider(i, "dur", "Duration", 1, Math.min(maxH, 96), 1, Math.round(e.duration_h), `${Math.round(e.duration_h)} h`);
+    }
+    if (t.mag) f += slider(i, "mag", t.mag[1], t.mag[2], t.mag[3], t.mag[4], e.mag ?? t.mag[2], e.mag ?? t.mag[2]);
+    return `<div class="ev ${e.enabled ? "" : "off"}"><div class="eh">
+        <label class="switch" title="Enable / disable"><input type="checkbox" data-i="${i}" data-k="enabled" ${e.enabled ? "checked" : ""}><i></i></label>
+        <b>${esc(e.id)} · ${esc(t.label)}</b>${e.id.startsWith("U") ? `<button class="x" data-del="${i}" title="Remove">✕</button>` : ""}</div>
+      <div class="f"><label>Where</label><select data-i="${i}" data-k="target" style="grid-column:span 2">${t.targets.map(o => `<option value="${o.id}" ${o.id === e.target ? "selected" : ""}>${esc(o.name)}</option>`).join("")}</select>
+      ${f}</div>
+      <div class="hint">Starts ${labDate(e.start_h)} · ${esc(t.hint)}</div>
+      ${early ? `<div class="warn">⚠ Starts during the AI commissioning period — the baseline will learn it as “normal”.</div>` : ""}</div>`;
+  }).join("");
+  $("labbody").innerHTML = `${SERVED ? "" : `<div class="banner"><b>Viewing a saved file.</b> To re-run simulations from here, start the app:<br><code>python app.py</code> → opens http://localhost:8050</div>`}
+    <div class="row"><label>Scenario</label><select id="lsc">${L.scenarios.map(s => `<option ${s === L.scenario ? "selected" : ""}>${s}</option>`).join("")}</select>
+      <label style="min-width:0">Seed</label><input type="number" id="lseed" value="${L.seed}" style="width:80px"><button class="btn" id="ldice" title="Random seed">🎲</button></div>
+    <div class="row"><label>Days</label><input type="range" id="ldays" min="${L.min_days}" max="${L.max_days}" value="${L.days}" style="flex:1"><span id="ldv">${L.days} days</span></div>
+    <div class="row" style="justify-content:space-between"><b style="font-size:13px">Injected problems (${L.events.filter(e => e.enabled).length} on)</b>
+      <span><button class="btn" id="lall">All on</button> <button class="btn" id="lnone">All off</button></span></div>
+    ${evs || '<p class="note">No events — add one below.</p>'}
+    <div class="ev"><div class="eh"><b>＋ Add your own problem</b></div>
+      <div class="row" style="margin:0"><select id="laddt" style="flex:1">${Object.entries(T).map(([k, t]) => `<option value="${k}">${esc(t.label)}</option>`).join("")}</select><button class="btn" id="ladd">Add</button></div></div>`;
+  const body = $("labbody");
+  body.querySelectorAll("input[type=range][data-i]").forEach(inp => {
+    inp.oninput = () => { labSet(+inp.dataset.i, inp.dataset.k, +inp.value); };
+    inp.onchange = () => renderLab();
+  });
+  body.querySelectorAll("input[type=checkbox][data-i]").forEach(inp => inp.onchange = () => { LAB.events[+inp.dataset.i].enabled = inp.checked; renderLab(); });
+  body.querySelectorAll("select[data-i]").forEach(s => s.onchange = () => { const e = LAB.events[+s.dataset.i]; e.target = s.value; e.edited = true; renderLab(); });
+  body.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { LAB.events.splice(+b.dataset.del, 1); renderLab(); });
+  $("ldays").oninput = e => { $("ldv").textContent = e.target.value + " days"; };
+  $("ldays").onchange = e => { LAB.days = +e.target.value; renderLab(); };
+  $("lseed").onchange = e => LAB.seed = +e.target.value;
+  $("ldice").onclick = () => { LAB.seed = Math.floor(Math.random() * 9000) + 100; $("lseed").value = LAB.seed; };
+  $("lall").onclick = () => { LAB.events.forEach(e => e.enabled = true); renderLab(); };
+  $("lnone").onclick = () => { LAB.events.forEach(e => e.enabled = false); renderLab(); };
+  $("lsc").onchange = async e => {
+    if (!SERVED) { toast("Start python app.py to switch scenarios live."); e.target.value = LAB.scenario; return; }
+    LAB = await (await fetch("/api/config?scenario=" + e.target.value)).json(); renderLab();
+  };
+  $("ladd").onclick = () => {
+    const type = $("laddt").value, t = T[type];
+    LAB.events.push({id: "U" + (uid++), type, target: t.targets[t.targets.length - 1].id, start_h: (LAB.train_days + 1) * 24 + 10,
+      duration_h: t.window ? 72 : 6, window: t.window ? [18, 23] : null, mag: t.mag ? (t.mag[2] + t.mag[3]) / 2 : null, enabled: true, edited: true});
+    const ne = LAB.events[LAB.events.length - 1];
+    if (type === "chronic_inequity") { ne.start_h = 0; ne.duration_h = 9999; ne.mag = 0.5; }
+    renderLab(); $("labbody").scrollTop = 1e6;
+  };
+  $("runbtn").disabled = !SERVED;
+  $("labmsg").textContent = SERVED ? "" : "run python app.py to enable";
+}
+function labSet(i, k, v) {
+  const e = LAB.events[i], t = LAB.types[e.type]; e.edited = true;
+  const day = Math.floor(e.start_h / 24), hr = e.start_h % 24, lv = $(`lv-${i}-${k}`);
+  if (k === "day") { e.start_h = v * 24 + hr; lv.textContent = `day ${v + 1}`; }
+  if (k === "hour") { e.start_h = day * 24 + v; lv.textContent = `${String(v).padStart(2, "0")}:00`; }
+  if (k === "dur") { e.duration_h = v; lv.textContent = `${v} h`; }
+  if (k === "ndays") { e.duration_h = v * 24; lv.textContent = `${v} d`; }
+  if (k === "wstart") { const len = (e.window || [18, 23])[1] - (e.window || [18, 23])[0]; e.window = [v, Math.min(24, v + len)]; lv.textContent = `${v}:00`; }
+  if (k === "wlen") { const s = (e.window || [18, 23])[0]; e.window = [s, Math.min(24, s + v)]; lv.textContent = `${v} h`; }
+  if (k === "mag") { e.mag = v; lv.textContent = v; }
+  if (k === "day" || k === "ndays") { if (t.window) { e.start_h = Math.floor(e.start_h / 24) * 24; } }
+}
+$("runbtn").onclick = async () => {
+  if (!SERVED || !LAB) return;
+  const on = LAB.events.filter(e => e.enabled).length;
+  $("ovmsg").textContent = `${LAB.scenario} · ${LAB.days} days · ${on} injected problem(s) · seed ${LAB.seed}`;
+  $("overlay").style.display = "flex";
+  try {
+    const r = await fetch("/api/run", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(LAB)});
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    stop(); loadData(d); LAB = JSON.parse(JSON.stringify(D.lab)); sel = null; seenIds = new Set();
+    renderAll(false); closeLab();
+    const e = D.evaluation;
+    toast(`Run complete in ${D.meta.runtime_s}s — detected ${e.events_detected}/${e.events_total} events · precision ${e.precision == null ? "–" : (e.precision * 100).toFixed(0) + "%"} · ${D.alerts.length} alerts`);
+  } catch (err) { toast("Simulation failed: " + err.message); }
+  finally { $("overlay").style.display = "none"; }
+};
+let toastT;
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 5000); }
+
+/* ================================ BOOT ================================ */
+loadData(D); readTheme(); initMap();
+const hashTab = (location.hash.match(/tab=(\w+)/) || [])[1];
+showTab(TABS.some(t => t[0] === hashTab) ? hashTab : "balance");
+renderAll(false);
+if (location.hash.includes("lab")) openLab();
+</script>
+</body>
+</html>
